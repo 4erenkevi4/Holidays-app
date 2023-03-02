@@ -3,7 +3,6 @@ package com.elinext.holidays.android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,20 +18,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Black
-import androidx.compose.ui.graphics.Color.Companion.Green
 import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elinext.holidays.Greeting
+import com.elinext.holidays.android.ui.YearScreen
 import com.elinext.holidays.models.Day
+import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.CalendarDay
@@ -46,6 +44,7 @@ import java.time.format.TextStyle
 import java.util.*
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -81,7 +80,7 @@ fun TopBar(title: String) {
             modifier = Modifier.padding(16.dp),
             text = title,
             fontSize = 20.sp,
-            color = MaterialTheme.colors.onSurface
+            color = colors.onSurface
         )
         Spacer(modifier = Modifier.weight(1f))
         DropDownMenu()
@@ -102,7 +101,7 @@ fun DropDownMenu() {
 
     Row(modifier = Modifier.clickable { expanded = !expanded }) {
         Text(
-            suggestions.first(), color = MaterialTheme.colors.onSurface
+            suggestions.first(), color = colors.onSurface
         )
         Icon(
             imageVector = Icons.Filled.ArrowDropDown,
@@ -120,7 +119,7 @@ fun DropDownMenu() {
                 //do something ...
             }) {
                 Text(
-                    text = label, color = MaterialTheme.colors.onSurface
+                    text = label, color = colors.onSurface
                 )
             }
         }
@@ -128,11 +127,10 @@ fun DropDownMenu() {
 }
 
 @Composable
-fun CustomTabs() {
+fun CustomTabs(calendarState: CalendarState) {
     var selectedIndex by remember { mutableStateOf(0) }
 
     val list = listOf("Month", "Year")
-
     TabRow(selectedTabIndex = selectedIndex,
         backgroundColor = Color.Gray,
         indicator = { tabPositions: List<TabPosition> ->
@@ -161,6 +159,19 @@ fun CustomTabs() {
             )
         }
     }
+    if (selectedIndex == 0){
+        InfoView()
+        DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
+        HorizontalCalendar(
+            state = calendarState,
+            dayContent = { Day(it) }
+        )
+        HolidaysView()
+    }
+    else {
+        InfoView()
+        YearScreen()
+    }
 }
 
 @Composable
@@ -175,22 +186,14 @@ fun MainScreen() {
     val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
     val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
     val firstDayOfWeek = remember { firstDayOfWeekFromLocale() } // Available from the library
-
-    val state = rememberCalendarState(
+    val calendarState = rememberCalendarState(
         startMonth = startMonth,
         endMonth = endMonth,
         firstVisibleMonth = currentMonth,
         firstDayOfWeek = firstDayOfWeek
     )
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        CustomTabs()
-        InfoView()
-        DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
-        HorizontalCalendar(
-            state = state,
-            dayContent = { Day(it) }
-        )
-        HolidaysView()
+        CustomTabs(calendarState)
     }
 }
 
