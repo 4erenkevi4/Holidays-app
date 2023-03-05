@@ -1,5 +1,6 @@
 package com.elinext.holidays.models
 
+@kotlinx.serialization.Serializable
 data class Day(
     val day: Int,
     val month: Int,

@@ -21,8 +21,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elinext.holidays.android.Day
-import com.elinext.holidays.android.DaysOfWeekTitle
 import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
@@ -51,7 +49,6 @@ fun YearScreen () {
     ) {
         items(list.size) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(screenWidth).padding(horizontal = 2.dp).clickable {
-
             }
                 .clip(shape = RoundedCornerShape(4.dp))
                 .aspectRatio(1f)

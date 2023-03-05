@@ -1,5 +1,6 @@
 package com.elinext.holidays.models
-
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 data class DayModel(
 val comment: String,
@@ -9,10 +10,10 @@ val version: Int,
 val country: CountryModel
 )
 
+@Serializable
 data class CountryModel(
-
-var id: Int,
-var name: String
+    @SerialName("id") var id: Int,
+    @SerialName("name") var name: String
 )
 
 data class HolidaysErrorModel(
