@@ -1,20 +1,23 @@
 package com.elinext.holidays.models
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
+@Serializable
 data class Holidays(
-
-var years: Map<Int, List<Holiday>>
+    @SerialName("years") var years: Map<Int, List<Holiday>>
 )
 
+@Serializable
 data class Country(
-
-var id: Int,
- var name: String,
+    @SerialName("id") var id: Int,
+    @SerialName("name") var name: String,
 )
 
+@Serializable
 data class Holiday(
-var comment: String,
-var date: String,
-var type: String,
-var country: Country,
-    )
+    @SerialName("comment") var comment: String,
+    @SerialName("date") var date: String,
+    @SerialName("type") var type: String,
+    @SerialName("country") var country: Country,
+)

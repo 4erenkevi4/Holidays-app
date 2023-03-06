@@ -1,13 +1,15 @@
 package com.elinext.holidays.models
+
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+@Serializable
 data class DayModel(
-val comment: String,
-val exclusionDate: String,
-val type: String,
-val version: Int,
-val country: CountryModel
+    @SerialName("comment") val comment: String,
+    @SerialName("exclusionDate") val exclusionDate: String,
+    @SerialName("type") val type: String,
+    @SerialName("version") val version: Int,
+    @SerialName("country") val country: CountryModel
 )
 
 @Serializable
