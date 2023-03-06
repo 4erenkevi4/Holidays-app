@@ -8,7 +8,7 @@ import okhttp3.Response
 
 interface HolidaysRemoteDataSource {
     suspend fun getCountries(): List<CountryModel>
-    suspend fun getAllDays(): Map<Int, List<Holiday>>
+    suspend fun getAllDays(): Holidays?
     suspend fun searchDay(date: String, id: String): DayModel
     suspend fun getQuantityWorkingDays(year: String, id: String): Number
 }

@@ -4,6 +4,7 @@ import com.elinext.holidays.features.holidaysApi.HolidaysRemoteDataSource
 import com.elinext.holidays.models.CountryModel
 import com.elinext.holidays.models.DayModel
 import com.elinext.holidays.models.Holiday
+import com.elinext.holidays.models.Holidays
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -31,16 +32,24 @@ class KtorHolidaysDataSource(
         )
     }
 
-    override suspend fun getAllDays(): Map<Int, List<Holiday>> {
+    override suspend fun getAllDays(): Holidays? {
         val httpRequest = httpClient.get {
             url {
                 path("days/all")
             }
         }
-        return json.decodeFromString(
-            MapSerializer(Int.serializer(),ListSerializer(Holiday.serializer())),
-            httpRequest.bodyAsText()
-        )
+        val result =
+            try {
+                json.decodeFromString(
+                    Holidays.serializer(),
+                  //  MapSerializer(Int.serializer(),ListSerializer(Holiday.serializer())),
+                    httpRequest.bodyAsText()
+                )
+            } catch (e: Exception) {
+                println(e.message)
+                null
+            }
+            return result
     }
 
     override suspend fun searchDay(date: String, id: String): DayModel {

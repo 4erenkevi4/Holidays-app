@@ -10,14 +10,14 @@ data class Holidays(
 
 @Serializable
 data class Country(
-    @SerialName("id") var id: Int,
-    @SerialName("name") var name: String,
+    @SerialName("id") var countryId: Int,
+    @SerialName("name") var countryName: String,
 )
 
 @Serializable
 data class Holiday(
     @SerialName("comment") var comment: String,
-    @SerialName("date") var date: String,
-    @SerialName("type") var type: String,
+    @SerialName("exclusionDate") var holidayDate: String,
+    @SerialName("type") var holidayType: String,
     @SerialName("country") var country: Country,
 )

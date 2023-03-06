@@ -34,6 +34,7 @@ import com.elinext.holidays.di.Configuration
 import com.elinext.holidays.di.EngineSDK
 import com.elinext.holidays.di.PlatformType
 import com.elinext.holidays.models.Day
+import com.elinext.holidays.models.Month
 import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
@@ -49,17 +50,21 @@ import java.util.*
 
 class MainActivity : ComponentActivity() {
 
+    private var listOfMonth = mutableListOf<Month>()
 
     val viewModel :  HolidaysViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val context = baseContext?: return
         EngineSDK.init(
             configuration = Configuration(
                 platformType = PlatformType.Android("1.0", "1")
             )
         )
         viewModel.initListOfCountries()
+        viewModel.getHolidays(context)
+
         setContent {
             MyApplicationTheme {
                 Scaffold(
@@ -78,6 +83,9 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+        viewModel.listOfMonthLiveData.observe(this) {
+            listOfMonth = it
         }
     }
 
