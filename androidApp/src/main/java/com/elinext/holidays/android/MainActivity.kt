@@ -3,6 +3,7 @@ package com.elinext.holidays.android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -27,16 +28,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.lifecycleScope
 import com.elinext.holidays.Greeting
 import com.elinext.holidays.android.ui.YearScreen
 import com.elinext.holidays.di.Configuration
 import com.elinext.holidays.di.EngineSDK
 import com.elinext.holidays.di.PlatformType
-import com.elinext.holidays.features.hubble.HubbleModule
 import com.elinext.holidays.features.hubble.hubble
-import com.elinext.holidays.models.CountryModel
 import com.elinext.holidays.models.Day
 import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.HorizontalCalendar
@@ -45,8 +42,6 @@ import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.daysOfWeek
 import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.MonthDay
 import java.time.YearMonth
@@ -56,15 +51,7 @@ import java.util.*
 class MainActivity : ComponentActivity() {
 
 
-   suspend fun getListOfContries(): MutableList<String> {
-       val listCountries = mutableListOf<String>()
-       print("запрос пошел")
-            EngineSDK.hubble.hubbleRepository.fetchNews().forEach {
-                listCountries.add(it.name)
-            }
-            print("запрос заокнчен")
-       return listCountries
-    }
+    val viewModel :  HolidaysViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,6 +60,7 @@ class MainActivity : ComponentActivity() {
                 platformType = PlatformType.Android("1.0", "1")
             )
         )
+        viewModel.initListOfCountries()
         setContent {
             MyApplicationTheme {
                 Scaffold(
@@ -122,29 +110,32 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun DropDownMenu() {
         var expanded by remember { mutableStateOf(false) }
+        val listCountries = viewModel.listOfCountries.collectAsState(initial = null)
 
-        Row(modifier = Modifier.clickable { expanded = !expanded }) {
-            Text(
-                listCountries.first(), color = colors.onSurface
-            )
-            Icon(
-                imageVector = Icons.Filled.ArrowDropDown,
-                contentDescription = null,
-                tint = Red
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            listCountries.forEach { label ->
-                DropdownMenuItem(onClick = {
-                    expanded = false
-                    //do something ...
-                }) {
-                    Text(
-                        text = label, color = colors.onSurface
-                    )
+        listCountries.value?.let { countries->
+            Row(modifier = Modifier.clickable { expanded = !expanded }) {
+                Text(
+                    countries.first(), color = colors.onSurface
+                )
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = null,
+                    tint = Red
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                countries.forEach { label ->
+                    DropdownMenuItem(onClick = {
+                        expanded = false
+                        //do something ...
+                    }) {
+                        Text(
+                            text = label, color = colors.onSurface
+                        )
+                    }
                 }
             }
         }
