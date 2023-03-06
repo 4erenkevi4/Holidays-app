@@ -3,7 +3,7 @@ package com.elinext.holidays.android
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.elinext.holidays.di.EngineSDK
-import com.elinext.holidays.features.hubble.hubble
+import com.elinext.holidays.features.holidaysApi.apiModule
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -19,7 +19,8 @@ class HolidaysViewModel : ViewModel() {
         viewModelScope.launch {
             val listCountries = mutableListOf<String>()
             print("запрос пошел")
-            EngineSDK.hubble.holidaysApiRepository.getCountries().forEach {
+
+            EngineSDK.apiModule.holidaysRepository.getCountries().forEach {
                 listCountries.add(it.name)
             }
             print("запрос заокнчен")

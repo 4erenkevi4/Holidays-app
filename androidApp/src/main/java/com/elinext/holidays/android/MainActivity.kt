@@ -33,7 +33,6 @@ import com.elinext.holidays.android.ui.YearScreen
 import com.elinext.holidays.di.Configuration
 import com.elinext.holidays.di.EngineSDK
 import com.elinext.holidays.di.PlatformType
-import com.elinext.holidays.features.hubble.hubble
 import com.elinext.holidays.models.Day
 import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.HorizontalCalendar
