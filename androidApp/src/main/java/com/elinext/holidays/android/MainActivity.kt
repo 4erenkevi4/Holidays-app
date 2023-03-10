@@ -1,6 +1,7 @@
 package com.elinext.holidays.android
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Black
+import androidx.compose.ui.graphics.Color.Companion.Blue
 import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -28,7 +30,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elinext.holidays.Greeting
 import com.elinext.holidays.android.ui.YearScreen
 import com.elinext.holidays.di.Configuration
 import com.elinext.holidays.di.EngineSDK
@@ -50,13 +51,13 @@ import java.util.*
 
 class MainActivity : ComponentActivity() {
 
-    private var listOfMonth = mutableListOf<Month>()
+    private lateinit var listOfMonth: Month
 
-    val viewModel :  HolidaysViewModel by viewModels()
+    val viewModel: HolidaysViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val context = baseContext?: return
+        val context = baseContext ?: return
         EngineSDK.init(
             configuration = Configuration(
                 platformType = PlatformType.Android("1.0", "1")
@@ -64,28 +65,27 @@ class MainActivity : ComponentActivity() {
         )
         viewModel.initListOfCountries()
         viewModel.getHolidays(context)
-
-        setContent {
-            MyApplicationTheme {
-                Scaffold(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp),
-                    topBar = { TopBar("March , 2023") },
-                    backgroundColor = colors.background,
-                    contentColor = Color.White
-                ) { value ->
-                    val padding = value
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        GreetingView(Greeting().greet())
+        viewModel.listOfMonthLiveData.observe(this) {
+            listOfMonth = it
+            setContent {
+                MyApplicationTheme {
+                    Scaffold(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 8.dp),
+                        topBar = { TopBar("March , 2023") },
+                        backgroundColor = colors.background,
+                        contentColor = Color.White
+                    ) { value ->
+                        val padding = value
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            GreetingView()
+                        }
                     }
                 }
             }
-        }
-        viewModel.listOfMonthLiveData.observe(this) {
-            listOfMonth = it
         }
     }
 
@@ -119,7 +119,7 @@ class MainActivity : ComponentActivity() {
         var expanded by remember { mutableStateOf(false) }
         val listCountries = viewModel.listOfCountries.collectAsState(initial = null)
 
-        listCountries.value?.let { countries->
+        listCountries.value?.let { countries ->
             Row(modifier = Modifier.clickable { expanded = !expanded }) {
                 Text(
                     countries.first(), color = colors.onSurface
@@ -196,7 +196,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun GreetingView(text: String) {
+    fun GreetingView() {
         MainScreen()
     }
 
@@ -259,10 +259,19 @@ class MainActivity : ComponentActivity() {
     fun Day(day: CalendarDay) {
         val today = MonthDay.now()
         val isCurrentMonth = day.position.name == DayPosition.MonthDate.name
-        val color: Color = if (today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth) {
+        val serverDay = listOfMonth.listOfDays.find { it?.day == today.dayOfMonth }
+        val isWorkingDayInsteadHoliday =
+            (serverDay?.isHoliday == false && serverDay.description.isNullOrEmpty().not())
+        val modifierForToday =
+            if (today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth) Modifier
+                .background(Color.Gray)
+                .clip(RoundedCornerShape(3.dp)) else Modifier
+        val color: Color = if (serverDay?.isHoliday == true) {
             Red
         } else if (isCurrentMonth) {
             Black
+        } else if (isWorkingDayInsteadHoliday) {
+            Blue
         } else
             Color.Gray
 
@@ -273,6 +282,13 @@ class MainActivity : ComponentActivity() {
         ) {
 
             Text(
+                modifier = modifierForToday.clickable {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "${serverDay?.description} ${serverDay?.day} ${serverDay?.month}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
                 text = day.date.dayOfMonth.toString(),
                 color = color
             )
@@ -350,7 +366,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun DefaultPreview() {
         MyApplicationTheme {
-            GreetingView("Hello, Android!")
+            GreetingView()
         }
     }
 }

@@ -35,8 +35,8 @@ class HolidaysViewModel : ViewModel() {
     val listOfCountries: Flow<MutableList<String>> = _listOfCountries.receiveAsFlow()
 
 
-    private val _listOfMonthLiveData = MutableLiveData<MutableList<Month>>()
-    val listOfMonthLiveData: LiveData<MutableList<Month>> = _listOfMonthLiveData
+    private val _listOfMonthLiveData = MutableLiveData<Month>()
+    val listOfMonthLiveData: LiveData<Month> = _listOfMonthLiveData
 
     private val _holidaysLiveData = MutableLiveData<List<Holiday>>()
     val holidaysLiveData: LiveData<List<Holiday>> = _holidaysLiveData
@@ -92,7 +92,7 @@ class HolidaysViewModel : ViewModel() {
                     currentMonth,
                     currentMonth.getNextMonth()
                 )
-                _listOfMonthLiveData.value = listOfMonths
+                _listOfMonthLiveData.value = currentMonth
                 _holidaysLiveData.value = upcomingHolidays
             }
         }
