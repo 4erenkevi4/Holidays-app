@@ -23,12 +23,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Black
+import androidx.compose.ui.graphics.Color.Companion.Blue
 import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elinext.holidays.android.ui.YearScreen
@@ -37,6 +37,7 @@ import com.elinext.holidays.di.EngineSDK
 import com.elinext.holidays.di.PlatformType
 import com.elinext.holidays.models.Day
 import com.elinext.holidays.models.Holiday
+import com.elinext.holidays.utils.Constants.WORKING_WEEKEND
 import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
@@ -72,25 +73,42 @@ class MainActivity : ComponentActivity() {
             listOfHolidays = it
             setContent {
                 MyApplicationTheme {
+                    val currentMonth = remember { YearMonth.now() }
+                    val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
+                    val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
+                    val firstDayOfWeek = remember { firstDayOfWeekFromLocale() } // Available from the library
+                    val calendarState = rememberCalendarState(
+                        startMonth = startMonth,
+                        endMonth = endMonth,
+                        firstVisibleMonth = currentMonth,
+                        firstDayOfWeek = firstDayOfWeek
+                    )
                     Scaffold(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(horizontal = 8.dp),
-                        topBar = { TopBar("March , 2023") },
+                        topBar = { TopBar(getTitle(calendarState)) },
                         backgroundColor = colors.background,
-                        contentColor = Color.White
+                        contentColor = White
                     ) { value ->
                         val padding = value
                         Surface(
                             modifier = Modifier.fillMaxSize(),
                         ) {
-                            GreetingView()
+                            GreetingView(calendarState)
                         }
                     }
                 }
             }
         }
     }
+
+    @Composable
+    fun getTitle(calendarState: CalendarState): String{
+        val month = calendarState.firstVisibleMonth
+return "${month.yearMonth.month.name}, ${month.yearMonth.year}"
+    }
+
 
     @Composable
     fun TopBar(title: String) {
@@ -167,7 +185,7 @@ class MainActivity : ComponentActivity() {
                 Tab(
                     modifier = if (selected) Modifier
                         .background(
-                            Color.White
+                            White
                         )
                     else Modifier
                         .background(
@@ -185,45 +203,31 @@ class MainActivity : ComponentActivity() {
             }
         }
         if (selectedIndex == 0) {
-            InfoView()
+            InfoView(calendarState)
             DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
             HorizontalCalendar(
                 state = calendarState,
                 dayContent = { Day(it) }
             )
-            HolidaysView()
+            HolidaysView(calendarState)
         } else {
-            InfoView()
+            InfoView(calendarState)
             YearScreen()
         }
     }
 
     @Composable
-    fun GreetingView() {
-        MainScreen()
-    }
-
-
-    @Composable
-    fun MainScreen() {
-        val currentMonth = remember { YearMonth.now() }
-        val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
-        val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
-        val firstDayOfWeek = remember { firstDayOfWeekFromLocale() } // Available from the library
-        val calendarState = rememberCalendarState(
-            startMonth = startMonth,
-            endMonth = endMonth,
-            firstVisibleMonth = currentMonth,
-            firstDayOfWeek = firstDayOfWeek
-        )
+    fun GreetingView(calendarState: CalendarState) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CustomTabs(calendarState)
         }
     }
 
     @Composable
-    fun InfoView() {
-        var text = "20 working days (160 working hours)"
+    fun InfoView(calendarState: CalendarState) {
+        val month = calendarState.firstVisibleMonth.yearMonth
+        val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1)
+        var text = "$number working days (${number * 8} working hours)"
         OutlinedTextField(
             modifier = Modifier.padding(16.dp),
             value = text,
@@ -263,7 +267,7 @@ class MainActivity : ComponentActivity() {
         val today = MonthDay.now()
         val isDayShownMonth = day.position.name == DayPosition.MonthDate.name
         val isCurrentMonth = (day.date.month.name == today.month.name && isDayShownMonth)
-
+        val isHoliday = viewModel.holidayCheck(day.date.dayOfMonth,day.date.monthValue-1,day.date.year)
         val isTodayDay = today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth
         val holiday = listOfHolidays?.firstOrNull {
             formattedData(it.holidayDate) == "${day.date}"
@@ -276,7 +280,7 @@ class MainActivity : ComponentActivity() {
                         radius = this.size.maxDimension
                     )
                 }
-            else if(holiday!=null){
+            else if (holiday != null) {
                 Modifier.clickable {
                     Toast.makeText(
                         this@MainActivity,
@@ -284,19 +288,19 @@ class MainActivity : ComponentActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-            }
-            else Modifier
+            } else Modifier
 
-        val color: Color = if (holiday?.holidayType == "HOLIDAY") {
-            Red
-        }
-        else if (isTodayDay) {
+        val color: Color = if (isTodayDay) {
             White
         }
-        else if (isDayShownMonth) {
-            Black
+        else if (holiday?.holidayType == WORKING_WEEKEND) {
+            Blue
         }
-        else
+        else if (isHoliday) {
+            Red
+        }  else if (isDayShownMonth) {
+            Black
+        } else
             Color.Gray
 
         Box(
@@ -321,11 +325,9 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun HolidaysView() {
-        val listHolidays = listOf(
-            Day(8, 3, 2023, "8 March 2023", true, "International woman's day"),
-            Day(17, 3, 2023, "17 March 2023", true, "Next some holiday")
-        )
+    fun HolidaysView(calendarState: CalendarState) {
+        val month = calendarState.firstVisibleMonth.yearMonth
+        val listHolidays = viewModel.getDaysOfMonth(year = month.year, month = month.monthValue-1).filter { it?.description.isNullOrEmpty().not() }
         Column(
             modifier = Modifier
                 .background(colors.background)
@@ -338,8 +340,10 @@ class MainActivity : ComponentActivity() {
             )
             listHolidays.let { holiday ->
                 LazyColumn {
-                    itemsIndexed(holiday) { index, currentHoliday ->
-                        HolidayItem(currentHoliday)
+                    itemsIndexed(holiday) { _, currentHoliday ->
+                        currentHoliday?.let {
+                            HolidayItem(it)
+                        }
                     }
                 }
             }
@@ -353,7 +357,7 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 elevation = 5.dp,
-                backgroundColor = Color.White
+                backgroundColor = White
             ) {
                 Column() {
                     Row(
@@ -363,15 +367,15 @@ class MainActivity : ComponentActivity() {
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .size(6.dp)
-                                .background(Red)
+                                .size(8.dp)
+                                .background(if (holiday.description?.contains("instead") == true) Blue else Red)
                         ) {
                         }
                         Text(
                             modifier = Modifier.padding(horizontal = 10.dp),
                             text = holiday.date,
                             color = Color.Gray,
-                            fontSize = 12.sp
+                            fontSize = 13.sp
                         )
                     }
                     Text(
@@ -383,15 +387,6 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
-        }
-    }
-
-
-    @Preview
-    @Composable
-    fun DefaultPreview() {
-        MyApplicationTheme {
-            GreetingView()
         }
     }
 }

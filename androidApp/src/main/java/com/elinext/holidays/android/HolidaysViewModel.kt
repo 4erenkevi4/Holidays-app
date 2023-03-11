@@ -28,7 +28,7 @@ class HolidaysViewModel : ViewModel() {
 
     private val calendar: Calendar = Calendar.getInstance()
 
-     val filteredMapOfHolidays = HashMap<Int, List<Holiday>?>()
+    val filteredMapOfHolidays = HashMap<Int, List<Holiday>?>()
 
 
     private val _listOfCountries = Channel<MutableList<String>>()
@@ -43,7 +43,6 @@ class HolidaysViewModel : ViewModel() {
 
     private val _holidaysLiveData = MutableLiveData<List<Holiday>>()
     val holidaysLiveData: LiveData<List<Holiday>> = _holidaysLiveData
-
 
 
     fun initListOfCountries() {
@@ -66,7 +65,7 @@ class HolidaysViewModel : ViewModel() {
                 val upcomingHolidays = arrayListOf<Holiday>()
                 sortedYears.forEach { yearInSortedYears ->
                     val filteredHolidaysMapByOffice =
-                        it[yearInSortedYears]?.filter { holiday->
+                        it[yearInSortedYears]?.filter { holiday ->
                             holiday.country.countryName == "Belarus"
                         }
                     filteredMapOfHolidays[yearInSortedYears] = filteredHolidaysMapByOffice
@@ -76,11 +75,12 @@ class HolidaysViewModel : ViewModel() {
                         }
                     }
                 }
-                _listOfMonthLiveData.value =  filteredMapOfHolidays[year]
+                _listOfMonthLiveData.value = filteredMapOfHolidays[year]
             }
         }
     }
-    private fun getDaysOfMonth(
+
+     fun getDaysOfMonth(
         month: Int,
         year: Int,
     ): MutableList<Day?> {
@@ -89,38 +89,64 @@ class HolidaysViewModel : ViewModel() {
         val listOfDays = arrayListOf<Day?>()
         listOfDays.addAll(getEmptyDaysList(calendar.get(Calendar.DAY_OF_WEEK)))
         for (day in calendar.getMinimum(Calendar.DATE)..daysOfWeek) {
-            listOfDays.add(Day(day, month, year,
-                getFullDate(day, month, year),
-                holidayCheck(getFullDate(day, month, year),
-                    day, month, year),addComment(getFullDate(day,month,year),year)
-            ))
+            listOfDays.add(
+                Day(
+                    day, month, year,
+                    getFullDate(day, month, year),
+                    holidayCheck(
+                        day, month, year
+                    ), addComment(getFullDate(day, month, year), year)
+                )
+            )
         }
         return listOfDays
     }
 
-    private fun addComment(fullDate: String,year: Int ): String? {
-        val isContains = filteredMapOfHolidays[year]?.find { it.holidayDate==fullDate }
+    fun getWorkingDaysOfMonth(
+        year: Int,
+        month: Int,
+    ): Int {
+        calendar.set(year, month, calendar.getMinimum(Calendar.DATE))
+        val daysOfWeek = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+        val listOfDays = arrayListOf<Day?>()
+        listOfDays.addAll(getEmptyDaysList(calendar.get(Calendar.DAY_OF_WEEK)))
+        for (day in calendar.getMinimum(Calendar.DATE)..daysOfWeek) {
+            listOfDays.add(
+                Day(
+                    day, month, year,
+                    getFullDate(day, month, year),
+                    holidayCheck(
+                        day, month, year
+                    ), addComment(getFullDate(day, month, year), year)
+                )
+            )
+        }
+        return listOfDays.filter { it?.isHoliday == false }.size
+    }
+
+    private fun addComment(fullDate: String, year: Int): String? {
+        val isContains = filteredMapOfHolidays[year]?.find { it.holidayDate.substring(0, 10) == fullDate }
         return isContains?.comment
     }
 
     private fun getEmptyDaysList(emptyDays: Int): List<Day?> {
         return List(WEEK_STARTS_ON_MONDAY.indexOf(emptyDays)) { null }
     }
+
     @SuppressLint("SimpleDateFormat")
     private fun getFullDate(day: Int, month: Int, year: Int): String {
         calendar.set(year, month, day, 0, 0, 0)
         calendar.set(Calendar.MILLISECOND, 0)
-        return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(calendar.time)
+        return SimpleDateFormat("yyyy-MM-dd").format(calendar.time)
     }
 
-    private fun holidayCheck(
-        fullDate: String,
+    fun holidayCheck(
         day: Int, month: Int, year: Int,
     ): Boolean {
-
+        val fullDate = getFullDate(day, month, year)
         calendar.set(year, month, day)
         var ifWeekend =
-            calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY
+            calendar.get(Calendar.DAY_OF_WEEK) == 6 || calendar.get(Calendar.DAY_OF_WEEK) == 7
         val days = filteredMapOfHolidays[year]
         val holidays = arrayListOf<Holiday>()
         val transferredWorkingDays = arrayListOf<Holiday>()
@@ -135,7 +161,7 @@ class HolidaysViewModel : ViewModel() {
         ifWeekend = if (ifWeekend) {
             !transferredWorkingDays.any { it.holidayDate == fullDate }
         } else {
-            holidays.any { it.holidayDate == fullDate }
+            holidays.any { it.holidayDate.substring(0, 10) == fullDate }
         }
         return ifWeekend
     }
@@ -175,9 +201,13 @@ class HolidaysViewModel : ViewModel() {
         calendar.set(Calendar.MONTH, month)
         val calendarYear = calendar.get(Calendar.YEAR)
         val calendarMonth = calendar.get(Calendar.MONTH)
-        return Month(calendarYear, calendarMonth,
-            getDaysOfMonth(calendarMonth,
-                calendarYear))
+        return Month(
+            calendarYear, calendarMonth,
+            getDaysOfMonth(
+                calendarMonth,
+                calendarYear
+            )
+        )
     }
 
 }
