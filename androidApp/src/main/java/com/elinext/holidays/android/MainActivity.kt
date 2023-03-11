@@ -10,8 +10,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material.icons.Icons
@@ -176,7 +178,7 @@ return "${month.yearMonth.month.name}, ${month.yearMonth.year}"
         val list = listOf("Month", "Year")
         TabRow(selectedTabIndex = selectedIndex,
             backgroundColor = Color.Gray,
-            indicator = { tabPositions: List<TabPosition> ->
+            indicator = {
                 Box {}
             }
         ) {
@@ -202,17 +204,19 @@ return "${month.yearMonth.month.name}, ${month.yearMonth.year}"
                 )
             }
         }
-        if (selectedIndex == 0) {
-            InfoView(calendarState)
-            DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
-            HorizontalCalendar(
-                state = calendarState,
-                dayContent = { Day(it) }
-            )
-            HolidaysView(calendarState)
-        } else {
-            InfoView(calendarState)
-            YearScreen()
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+            if (selectedIndex == 0) {
+                InfoView(calendarState)
+                DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
+                HorizontalCalendar(
+                    state = calendarState,
+                    dayContent = { Day(it) }
+                )
+                HolidaysView(calendarState)
+            } else {
+                InfoView(calendarState)
+                YearScreen()
+            }
         }
     }
 
@@ -339,7 +343,7 @@ return "${month.yearMonth.month.name}, ${month.yearMonth.year}"
                 color = colors.primaryVariant
             )
             listHolidays.let { holiday ->
-                LazyColumn {
+                LazyColumn (Modifier.height(if (listHolidays.size>1)500.dp else 150.dp)){
                     itemsIndexed(holiday) { _, currentHoliday ->
                         currentHoliday?.let {
                             HolidayItem(it)
