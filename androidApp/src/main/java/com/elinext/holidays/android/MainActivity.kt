@@ -20,10 +20,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Black
-import androidx.compose.ui.graphics.Color.Companion.Blue
 import androidx.compose.ui.graphics.Color.Companion.Red
+import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -35,7 +36,7 @@ import com.elinext.holidays.di.Configuration
 import com.elinext.holidays.di.EngineSDK
 import com.elinext.holidays.di.PlatformType
 import com.elinext.holidays.models.Day
-import com.elinext.holidays.models.Month
+import com.elinext.holidays.models.Holiday
 import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
@@ -44,14 +45,16 @@ import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.daysOfWeek
 import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
 import java.time.DayOfWeek
+import java.time.LocalDateTime
 import java.time.MonthDay
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var listOfMonth: Month
+    private var listOfHolidays: List<Holiday>? = null
 
     val viewModel: HolidaysViewModel by viewModels()
 
@@ -64,9 +67,9 @@ class MainActivity : ComponentActivity() {
             )
         )
         viewModel.initListOfCountries()
-        viewModel.getHolidays(context)
+        viewModel.getHolidays(context, Calendar.getInstance().get(Calendar.YEAR))
         viewModel.listOfMonthLiveData.observe(this) {
-            listOfMonth = it
+            listOfHolidays = it
             setContent {
                 MyApplicationTheme {
                     Scaffold(
@@ -258,21 +261,42 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun Day(day: CalendarDay) {
         val today = MonthDay.now()
-        val isCurrentMonth = day.position.name == DayPosition.MonthDate.name
-        val serverDay = listOfMonth.listOfDays.find { it?.day == today.dayOfMonth }
-        val isWorkingDayInsteadHoliday =
-            (serverDay?.isHoliday == false && serverDay.description.isNullOrEmpty().not())
-        val modifierForToday =
-            if (today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth) Modifier
-                .background(Color.Gray)
-                .clip(RoundedCornerShape(3.dp)) else Modifier
-        val color: Color = if (serverDay?.isHoliday == true) {
+        val isDayShownMonth = day.position.name == DayPosition.MonthDate.name
+        val isCurrentMonth = (day.date.month.name == today.month.name && isDayShownMonth)
+
+        val isTodayDay = today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth
+        val holiday = listOfHolidays?.firstOrNull {
+            formattedData(it.holidayDate) == "${day.date}"
+        }
+        val modifierForDay =
+            if (isTodayDay) Modifier
+                .drawBehind {
+                    drawCircle(
+                        color = Color.Gray,
+                        radius = this.size.maxDimension
+                    )
+                }
+            else if(holiday!=null){
+                Modifier.clickable {
+                    Toast.makeText(
+                        this@MainActivity,
+                        holiday.comment,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+            else Modifier
+
+        val color: Color = if (holiday?.holidayType == "HOLIDAY") {
             Red
-        } else if (isCurrentMonth) {
+        }
+        else if (isTodayDay) {
+            White
+        }
+        else if (isDayShownMonth) {
             Black
-        } else if (isWorkingDayInsteadHoliday) {
-            Blue
-        } else
+        }
+        else
             Color.Gray
 
         Box(
@@ -280,19 +304,20 @@ class MainActivity : ComponentActivity() {
                 .aspectRatio(1f), // This is important for square sizing!
             contentAlignment = Alignment.Center
         ) {
-
             Text(
-                modifier = modifierForToday.clickable {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "${serverDay?.description} ${serverDay?.day} ${serverDay?.month}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                },
+                modifier = modifierForDay,
                 text = day.date.dayOfMonth.toString(),
                 color = color
             )
         }
+    }
+
+    fun formattedData(dateString: String): String? {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val dateTime =
+            LocalDateTime.parse(dateString.substring(0, 19), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        return dateTime.format(formatter).substring(0, 10)
+
     }
 
     @Composable

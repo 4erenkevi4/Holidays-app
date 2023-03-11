@@ -28,15 +28,18 @@ class HolidaysViewModel : ViewModel() {
 
     private val calendar: Calendar = Calendar.getInstance()
 
-    private val filteredMapOfHolidays = HashMap<Int, List<Holiday>?>()
+     val filteredMapOfHolidays = HashMap<Int, List<Holiday>?>()
 
 
     private val _listOfCountries = Channel<MutableList<String>>()
     val listOfCountries: Flow<MutableList<String>> = _listOfCountries.receiveAsFlow()
 
+    private val _listOfHolidaysLiveData = MutableLiveData<Month>()
+    val listOfHolidaysLiveData: LiveData<Month> = _listOfHolidaysLiveData
 
-    private val _listOfMonthLiveData = MutableLiveData<Month>()
-    val listOfMonthLiveData: LiveData<Month> = _listOfMonthLiveData
+
+    private val _listOfMonthLiveData = MutableLiveData<List<Holiday>?>()
+    val listOfMonthLiveData: LiveData<List<Holiday>?> = _listOfMonthLiveData
 
     private val _holidaysLiveData = MutableLiveData<List<Holiday>>()
     val holidaysLiveData: LiveData<List<Holiday>> = _holidaysLiveData
@@ -73,27 +76,7 @@ class HolidaysViewModel : ViewModel() {
                         }
                     }
                 }
-                var calendarYear = calendar.get(Calendar.YEAR)
-                var calendarMonth = calendar.get(Calendar.MONTH)
-                if (year != null && month != null) {
-                    calendarYear = year
-                    calendarMonth = month
-                }
-                val currentMonth = Month(
-                    calendarYear,
-                    calendarMonth,
-                    getDaysOfMonth(
-                        calendarMonth,
-                        calendarYear
-                    )
-                )
-                val listOfMonths = mutableListOf(
-                    currentMonth.getPreviousMonth(),
-                    currentMonth,
-                    currentMonth.getNextMonth()
-                )
-                _listOfMonthLiveData.value = currentMonth
-                _holidaysLiveData.value = upcomingHolidays
+                _listOfMonthLiveData.value =  filteredMapOfHolidays[year]
             }
         }
     }
