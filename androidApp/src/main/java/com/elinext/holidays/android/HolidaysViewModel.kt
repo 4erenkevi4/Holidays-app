@@ -33,7 +33,7 @@ class HolidaysViewModel : ViewModel() {
 
     private val calendar: Calendar = Calendar.getInstance()
 
-    val filteredMapOfHolidays = HashMap<Int, List<Holiday>?>()
+    private val filteredMapOfHolidays = HashMap<Int, List<Holiday>?>()
 
 
     private val _listOfCountries = Channel<MutableList<String>>()
@@ -45,6 +45,9 @@ class HolidaysViewModel : ViewModel() {
 
     private val _listOfMonthLiveData = MutableLiveData<List<Holiday>?>()
     val listOfMonthLiveData: LiveData<List<Holiday>?> = _listOfMonthLiveData
+
+    private val _allHolidaysMapLivedata = MutableLiveData <MutableMap<Int, List<Holiday>?>>()
+    val allHolidaysMapLivedata: LiveData <MutableMap<Int, List<Holiday>?>> = _allHolidaysMapLivedata
 
     private val _holidaysLiveData = MutableLiveData<List<Holiday>>()
     val holidaysLiveData: LiveData<List<Holiday>> = _holidaysLiveData
@@ -92,7 +95,7 @@ class HolidaysViewModel : ViewModel() {
         }
     }
 
-    fun getHolidays(context: Context, year: Int? = null, month: Int? = null) {
+    fun getHolidays(context: Context, year: Int? = null) {
         viewModelScope.launch {
             Log.d("ktor", "get AllDays")
             EngineSDK.apiModule.holidaysRepository.getAllDays()?.years?.let {
@@ -111,7 +114,11 @@ class HolidaysViewModel : ViewModel() {
                         }
                     }
                 }
-                _listOfMonthLiveData.value = filteredMapOfHolidays[year]
+                if (year != null)
+                    _listOfMonthLiveData.value = filteredMapOfHolidays[year]
+                else
+                    _allHolidaysMapLivedata.value = filteredMapOfHolidays
+
             }
         }
     }

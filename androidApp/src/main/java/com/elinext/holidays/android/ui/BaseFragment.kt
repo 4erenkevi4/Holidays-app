@@ -146,15 +146,14 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
             )
             Scaffold(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp),
+                    .fillMaxSize(),
                 topBar = { TopBar(getTitle(calendarState)) },
                 backgroundColor = MaterialTheme.colors.background,
                 contentColor = Color.White
             ) { value ->
                 val padding = value
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CustomTabs(calendarState)
@@ -165,27 +164,31 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     }
 
     @Composable
-    fun getTitle(calendarState: CalendarState): String {
+    fun getTitle(calendarState: CalendarState, onlyMonthName: Boolean = false): String {
         val month = calendarState.firstVisibleMonth
-        return "${month.yearMonth.month.name}, ${month.yearMonth.year}"
+        val monthName = month.yearMonth.month.name
+        val formattedMonthName: String =
+            monthName.substring(0, 1).uppercase(Locale.ROOT) + monthName.substring(1)
+                .lowercase(Locale.ROOT)
+        return if (onlyMonthName) "$formattedMonthName info: " else "$formattedMonthName, ${month.yearMonth.year}"
     }
 
     @Composable
     fun TopBar(title: String) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier
+                    .padding(16.dp)
+                    .width(200.dp),
                 text = title,
                 fontSize = 20.sp,
                 color = MaterialTheme.colors.onSurface
             )
-            Spacer(modifier = Modifier.weight(1f))
             DropDownMenu()
-            Spacer(modifier = Modifier.weight(1f))
             Icon(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 painter = painterResource(id = R.drawable.ic_settings_24),
@@ -245,7 +248,6 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
     @Composable
     fun Day(day: CalendarDay) {
-        val holidaysList = viewModel.listOfHolidaysLiveData
         val today = MonthDay.now()
         val isDayShownMonth = day.position.name == DayPosition.MonthDate.name
         val isCurrentMonth = (day.date.month.name == today.month.name && isDayShownMonth)
@@ -298,7 +300,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     }
 
 
-    private fun formattedData(dateString: String): String? {
+    fun formattedData(dateString: String): String? {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         val dateTime =
             LocalDateTime.parse(dateString.substring(0, 19), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
@@ -337,7 +339,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
             readOnly = true,
             singleLine = true,
             shape = RoundedCornerShape(10.dp),
-            label = { Text("Info", color = MaterialTheme.colors.primaryVariant, fontSize = 14.sp) },
+            label = { Text(getTitle(calendarState = calendarState, true), color = MaterialTheme.colors.primaryVariant, fontSize = 14.sp) },
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 textColor = Color.Black,
                 unfocusedBorderColor = MaterialTheme.colors.primaryVariant,
