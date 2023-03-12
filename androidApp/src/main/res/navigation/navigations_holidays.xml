@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigations_holidays"
+    app:startDestination="@id/loaderFragment">
+
+
+    <fragment
+        android:id="@+id/loaderFragment"
+        android:name="com.elinext.holidays.android.ui.LoaderFragment"
+        android:label="LoaderFragment"
+        tools:layout="@layout/fragment_compose">
+        <action
+            android:id="@+id/action_loaderFragment_to_monthFragment"
+            app:destination="@id/monthFragment"
+            />
+    </fragment>
+    <fragment
+        android:id="@+id/monthFragment"
+        android:name="com.elinext.holidays.android.ui.MonthFragment"
+        android:label="MonthFragment"
+        tools:layout="@layout/fragment_compose"/>
+    <fragment
+        android:id="@+id/yearFragment"
+        android:name="com.elinext.holidays.android.ui.YearFragment"
+        android:label="YearFragment"
+        tools:layout="@layout/fragment_compose"/>
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.elinext.holidays.android.ui.SettingsFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_compose"/><action android:id="@+id/action_global_monthFragment" app:destination="@id/monthFragment"/>
+    <action android:id="@+id/action_global_settingsFragment" app:destination="@id/settingsFragment"/><action android:id="@+id/action_global_yearFragment" app:destination="@id/yearFragment"/>
+</navigation>

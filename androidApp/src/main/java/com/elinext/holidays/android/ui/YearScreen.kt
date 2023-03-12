@@ -45,6 +45,7 @@ fun YearScreen () {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp/3
     LazyVerticalGrid(
+        modifier = Modifier.height(500.dp),
         columns = GridCells.Fixed(3)
     ) {
         items(list.size) {

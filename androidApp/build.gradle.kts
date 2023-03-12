@@ -49,5 +49,9 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.6.1")
     implementation ("com.kizitonwose.calendar:compose:2.1.1")
     implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.fragment:fragment:1.5.5")
+    implementation("androidx.navigation:navigation-fragment:2.5.3")
+    implementation ("androidx.appcompat:appcompat:1.6.1")
+
 
 }

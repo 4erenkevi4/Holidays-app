@@ -2,6 +2,8 @@ package com.elinext.holidays.android
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
+import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -13,7 +15,10 @@ import com.elinext.holidays.models.Day
 import com.elinext.holidays.models.Holiday
 import com.elinext.holidays.models.Month
 import com.elinext.holidays.models.Year
+import com.elinext.holidays.utils.Constants.COUNTRY
 import com.elinext.holidays.utils.Constants.HOLIDAY
+import com.elinext.holidays.utils.Constants.OFFICE_COUNTRY
+import com.elinext.holidays.utils.Constants.OFFICE_ID
 import com.elinext.holidays.utils.Constants.WEEK_STARTS_ON_MONDAY
 import com.elinext.holidays.utils.Constants.WORKING_WEEKEND
 import kotlinx.coroutines.channels.Channel
@@ -22,7 +27,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.HashMap
+
 
 class HolidaysViewModel : ViewModel() {
 
@@ -43,6 +48,37 @@ class HolidaysViewModel : ViewModel() {
 
     private val _holidaysLiveData = MutableLiveData<List<Holiday>>()
     val holidaysLiveData: LiveData<List<Holiday>> = _holidaysLiveData
+
+
+    fun savePreferences(context: Context, country: String, officeId: String) {
+        val sf: SharedPreferences = context.getSharedPreferences(COUNTRY, 0) ?: return
+        val editor = sf.edit()
+        editor.putString(OFFICE_COUNTRY, country)
+        editor.putString(OFFICE_ID, officeId)
+        editor.apply()
+    }
+
+    fun getOfficeIdInPreferences(context: Context, ifNeedNameOffice: Boolean = true): String? {
+        val sf: SharedPreferences = context.getSharedPreferences(COUNTRY, 0)
+        return if (ifNeedNameOffice)
+            sf.getString(OFFICE_COUNTRY, getDeviceCountry(context))
+        else
+            sf.getString(OFFICE_ID, "1")
+    }
+
+    private fun getDeviceCountry(context: Context): String {
+        val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        return when (tm.networkCountryIso ?: "bl") {
+            "bl" -> "Belarus"
+            "ge" -> "Georgia"
+            "kz" -> "Kazakhstan"
+            "pl" -> "Poland"
+            "ua" -> "Ukraine"
+            "uz" -> "Uzbekistan"
+            "vn" -> "Vietnam"
+            else -> "Belarus"
+        }
+    }
 
 
     fun initListOfCountries() {
@@ -66,7 +102,7 @@ class HolidaysViewModel : ViewModel() {
                 sortedYears.forEach { yearInSortedYears ->
                     val filteredHolidaysMapByOffice =
                         it[yearInSortedYears]?.filter { holiday ->
-                            holiday.country.countryName == "Belarus"
+                            holiday.country.countryName == getOfficeIdInPreferences(context)
                         }
                     filteredMapOfHolidays[yearInSortedYears] = filteredHolidaysMapByOffice
                     if (yearInSortedYears == year) {
@@ -80,7 +116,7 @@ class HolidaysViewModel : ViewModel() {
         }
     }
 
-     fun getDaysOfMonth(
+    fun getDaysOfMonth(
         month: Int,
         year: Int,
     ): MutableList<Day?> {
@@ -125,7 +161,8 @@ class HolidaysViewModel : ViewModel() {
     }
 
     private fun addComment(fullDate: String, year: Int): String? {
-        val isContains = filteredMapOfHolidays[year]?.find { it.holidayDate.substring(0, 10) == fullDate }
+        val isContains =
+            filteredMapOfHolidays[year]?.find { it.holidayDate.substring(0, 10) == fullDate }
         return isContains?.comment
     }
 
