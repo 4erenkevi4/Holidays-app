@@ -1,5 +1,6 @@
 package com.elinext.holidays.android.ui
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -42,6 +43,7 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.*
 import com.kizitonwose.calendar.compose.CalendarState
+import kotlinx.coroutines.launch
 
 class YearFragment : BaseFragment() {
 
@@ -173,6 +175,7 @@ class YearFragment : BaseFragment() {
         )
     }
 
+    @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
     fun TestRow(items: List<Int>) {
         val configuration = LocalConfiguration.current
@@ -180,7 +183,9 @@ class YearFragment : BaseFragment() {
         val lazyListState = rememberLazyListState()
         val scope = rememberCoroutineScope()
 //
-
+        scope.launch {
+            lazyListState.scrollToItem(items.lastIndex)
+        }
         LazyRow(
             modifier = Modifier
                 .width(screenWidth),

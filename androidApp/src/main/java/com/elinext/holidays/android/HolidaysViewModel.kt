@@ -137,7 +137,7 @@ class HolidaysViewModel : ViewModel() {
                 if (year != null)
                     _listOfMonthLiveData.value = filteredMapOfHolidays[year]
                 else
-                    _allHolidaysMapLivedata.value = filteredMapOfHolidays
+                    _allHolidaysMapLivedata.value = filteredMapOfHolidays.toSortedMap()
 
             }
         }
