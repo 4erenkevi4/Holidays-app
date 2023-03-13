@@ -5,17 +5,15 @@ import android.view.View
 import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.FlingBehavior
-import androidx.compose.foundation.gestures.ScrollScope
 import androidx.compose.foundation.gestures.ScrollableDefaults
+import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +25,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elinext.holidays.android.MyApplicationTheme
 import com.elinext.holidays.android.R
 import com.elinext.holidays.models.Holiday
 import com.elinext.holidays.utils.Constants
@@ -43,12 +42,12 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.*
 import com.kizitonwose.calendar.compose.CalendarState
-import kotlinx.coroutines.launch
 
 class YearFragment : BaseFragment() {
 
 
     var allYearsMap: MutableMap<Int, List<Holiday>?> = mutableMapOf()
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val context = context ?: return
@@ -62,6 +61,40 @@ class YearFragment : BaseFragment() {
         }
     }
 
+    @Composable
+    override fun GreetingView() {
+        val currentYear = Year.now().value
+        val year = viewModel.curentYear.collectAsState(initial = currentYear)
+        MyApplicationTheme {
+            val currentMonth = remember { YearMonth.now() }
+            val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
+            val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
+            val firstDayOfWeek =
+                remember { firstDayOfWeekFromLocale() } // Available from the library
+            val calendarState = rememberCalendarState(
+                startMonth = startMonth,
+                endMonth = endMonth,
+                firstVisibleMonth = currentMonth,
+                firstDayOfWeek = firstDayOfWeek
+            )
+            Scaffold(
+                modifier = Modifier
+                    .fillMaxSize(),
+                topBar = { TopBar(year.value.toString()) },
+                backgroundColor = MaterialTheme.colors.background,
+                contentColor = Color.White
+            ) { value ->
+                val padding = value
+                Surface(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CustomTabs(calendarState)
+                    }
+                }
+            }
+        }
+    }
 
     @Composable
     override fun CalendarContent(calendarState: CalendarState) {
@@ -76,9 +109,68 @@ class YearFragment : BaseFragment() {
             firstVisibleMonth = currentMonth,
             firstDayOfWeek = firstDayOfWeek
         )
-        InfoView(yearCalendarState)
+        InfoView(null)
         TestRow(allYearsMap.keys.toList())
-        HolidaysView(yearCalendarState)
+        HolidaysView(null)
+    }
+
+    @Composable
+    override fun HolidaysView(calendarState: CalendarState?) {
+        val currentYear = Year.now().value
+        val year = viewModel.curentYear.collectAsState(initial = currentYear)
+        allYearsMap[year.value]?.let {listHolidays->
+        Column(
+            modifier = Modifier
+                .background(MaterialTheme.colors.background)
+                .fillMaxWidth()
+        ) {
+            Text(
+                modifier = Modifier.padding(16.dp),
+                text = "holidays",
+                color = MaterialTheme.colors.primaryVariant
+            )
+            listHolidays.let { holiday ->
+                LazyColumn(Modifier.height(if (listHolidays.size > 1) 500.dp else 150.dp)) {
+                    itemsIndexed(holiday) { _, currentHoliday ->
+                        currentHoliday.let {
+                            HolidayItem(com.elinext.holidays.models.Day(1,2,3,it.holidayDate,true,it.comment))
+                        }
+                    }
+                }
+            }
+        }
+        }
+    }
+
+    @Composable
+    override fun InfoView(calendarState: CalendarState?) {
+        val context = context ?: return
+        val currentYear = Year.now().value
+        val year = viewModel.curentYear.collectAsState(initial = currentYear)
+        val oficeId = viewModel.getOfficeIdInPreferences(context, false)
+        viewModel.getQuantityWorkingDays(year.value.toString(), oficeId ?: "1")
+        val number = viewModel.quantityWorkingDaysInYear.collectAsState(initial = "0")
+        var text = "${number.value} working days"
+        OutlinedTextField(
+            modifier = Modifier.padding(16.dp),
+            value = text,
+            onValueChange = { text = it },
+            readOnly = true,
+            singleLine = true,
+            shape = RoundedCornerShape(10.dp),
+            label = {
+                Text(
+                    "${year.value} year info:",
+                    color = MaterialTheme.colors.primaryVariant,
+                    fontSize = 14.sp
+                )
+            },
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                textColor = Color.Black,
+                unfocusedBorderColor = MaterialTheme.colors.primaryVariant,
+                focusedBorderColor = MaterialTheme.colors.primaryVariant
+            )
+        )
     }
 
     @Composable
@@ -94,9 +186,10 @@ class YearFragment : BaseFragment() {
                 .width(screenWidth),
             state = lazyListState,
             horizontalArrangement = Arrangement.spacedBy(0.dp),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp)
+            flingBehavior = flingBehavior(true, lazyListState),
         ) {
             itemsIndexed(items) { index, item ->
+                viewModel.setYearInTearFragment(item)
                 YearScreen(item)
             }
         }
@@ -238,5 +331,22 @@ class YearFragment : BaseFragment() {
             firstVisibleMonth = firstMonth,
             firstDayOfWeek = firstDayOfWeek
         )
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    @Composable
+    private fun pagedFlingBehavior(state: LazyListState): FlingBehavior {
+        val snappingLayout = remember(state) {
+            SnapLayoutInfoProvider(state) { _, _ -> 0f }
+        }
+        return rememberSnapFlingBehavior(snappingLayout)
+    }
+
+    @Composable
+    private fun continuousFlingBehavior(): FlingBehavior = ScrollableDefaults.flingBehavior()
+
+    @Composable
+    fun flingBehavior(isPaged: Boolean, state: LazyListState): FlingBehavior {
+        return if (isPaged) pagedFlingBehavior(state) else continuousFlingBehavior()
     }
 }

@@ -46,6 +46,7 @@ import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.MonthDay
+import java.time.Year
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -147,7 +148,9 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
             Scaffold(
                 modifier = Modifier
                     .fillMaxSize(),
-                topBar = { TopBar(getTitle(calendarState)) },
+                topBar = {
+                    TopBar(getTitle(calendarState))
+                },
                 backgroundColor = MaterialTheme.colors.background,
                 contentColor = Color.White
             ) { value ->
@@ -328,32 +331,40 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
 
     @Composable
-    fun InfoView(calendarState: CalendarState) {
-        val month = calendarState.firstVisibleMonth.yearMonth
-        val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1)
-        var text = "$number working days (${number * 8} working hours)"
-        OutlinedTextField(
-            modifier = Modifier.padding(16.dp),
-            value = text,
-            onValueChange = { text = it },
-            readOnly = true,
-            singleLine = true,
-            shape = RoundedCornerShape(10.dp),
-            label = { Text(getTitle(calendarState = calendarState, true), color = MaterialTheme.colors.primaryVariant, fontSize = 14.sp) },
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                textColor = Color.Black,
-                unfocusedBorderColor = MaterialTheme.colors.primaryVariant,
-                focusedBorderColor = MaterialTheme.colors.primaryVariant
+    open fun InfoView(calendarState: CalendarState?) {
+        calendarState?.firstVisibleMonth?.yearMonth?.let {month->
+            val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1)
+            var text = "$number working days (${number * 8} working hours)"
+            OutlinedTextField(
+                modifier = Modifier.padding(16.dp),
+                value = text,
+                onValueChange = { text = it },
+                readOnly = true,
+                singleLine = true,
+                shape = RoundedCornerShape(10.dp),
+                label = {
+                    Text(
+                        getTitle(calendarState = calendarState, true),
+                        color = MaterialTheme.colors.primaryVariant,
+                        fontSize = 14.sp
+                    )
+                },
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    textColor = Color.Black,
+                    unfocusedBorderColor = MaterialTheme.colors.primaryVariant,
+                    focusedBorderColor = MaterialTheme.colors.primaryVariant
+                )
             )
-        )
+        }
     }
 
 
     @Composable
-    fun HolidaysView(calendarState: CalendarState) {
-        val month = calendarState.firstVisibleMonth.yearMonth
-        val listHolidays = viewModel.getDaysOfMonth(year = month.year, month = month.monthValue - 1)
-            .filter { it?.description.isNullOrEmpty().not() }
+    open fun HolidaysView(calendarState: CalendarState?) {
+        calendarState?.firstVisibleMonth?.yearMonth?.let {month->
+            val listHolidays =
+                viewModel.getDaysOfMonth(year = month.year, month = month.monthValue - 1)
+                    .filter { it?.description.isNullOrEmpty().not() }
         Column(
             modifier = Modifier
                 .background(MaterialTheme.colors.background)
@@ -375,6 +386,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
             }
         }
     }
+}
 
 
     @Composable

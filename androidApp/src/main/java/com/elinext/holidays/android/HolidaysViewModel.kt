@@ -35,6 +35,11 @@ class HolidaysViewModel : ViewModel() {
 
     private val filteredMapOfHolidays = HashMap<Int, List<Holiday>?>()
 
+    private val _curentYear = Channel<Int>()
+    val curentYear: Flow<Int> = _curentYear.receiveAsFlow()
+
+    private val _quantityWorkingDaysInYear = Channel<Int>()
+    val quantityWorkingDaysInYear: Flow<Int> = _quantityWorkingDaysInYear.receiveAsFlow()
 
     private val _listOfCountries = Channel<MutableList<String>>()
     val listOfCountries: Flow<MutableList<String>> = _listOfCountries.receiveAsFlow()
@@ -46,12 +51,18 @@ class HolidaysViewModel : ViewModel() {
     private val _listOfMonthLiveData = MutableLiveData<List<Holiday>?>()
     val listOfMonthLiveData: LiveData<List<Holiday>?> = _listOfMonthLiveData
 
-    private val _allHolidaysMapLivedata = MutableLiveData <MutableMap<Int, List<Holiday>?>>()
-    val allHolidaysMapLivedata: LiveData <MutableMap<Int, List<Holiday>?>> = _allHolidaysMapLivedata
+    private val _allHolidaysMapLivedata = MutableLiveData<MutableMap<Int, List<Holiday>?>>()
+    val allHolidaysMapLivedata: LiveData<MutableMap<Int, List<Holiday>?>> = _allHolidaysMapLivedata
 
     private val _holidaysLiveData = MutableLiveData<List<Holiday>>()
     val holidaysLiveData: LiveData<List<Holiday>> = _holidaysLiveData
 
+
+    fun setYearInTearFragment(year: Int){
+        viewModelScope.launch {
+            _curentYear.send(year)
+        }
+    }
 
     fun savePreferences(context: Context, country: String, officeId: String) {
         val sf: SharedPreferences = context.getSharedPreferences(COUNTRY, 0) ?: return
@@ -92,6 +103,15 @@ class HolidaysViewModel : ViewModel() {
                 listCountries.add(it.name)
             }
             _listOfCountries.send(listCountries)
+        }
+    }
+
+    fun getQuantityWorkingDays(year: String, id: String) {
+        viewModelScope.launch {
+            Log.d("ktor", "get QuantityWorkingDays")
+            EngineSDK.apiModule.holidaysRepository.getQuantityWorkingDays(year, id).let {
+                _quantityWorkingDaysInYear.send(it.toInt())
+            }
         }
     }
 
