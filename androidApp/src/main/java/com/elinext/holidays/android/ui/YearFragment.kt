@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elinext.holidays.android.MyApplicationTheme
@@ -120,27 +121,36 @@ class YearFragment : BaseFragment() {
     override fun HolidaysView(calendarState: CalendarState?) {
         val currentYear = Year.now().value
         val year = viewModel.curentYear.collectAsState(initial = currentYear)
-        allYearsMap[year.value]?.let {listHolidays->
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colors.background)
-                .fillMaxWidth()
-        ) {
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = "holidays",
-                color = MaterialTheme.colors.primaryVariant
-            )
-            listHolidays.let { holiday ->
-                LazyColumn(Modifier.height(if (listHolidays.size > 1) 500.dp else 150.dp)) {
-                    itemsIndexed(holiday) { _, currentHoliday ->
-                        currentHoliday.let {
-                            HolidayItem(com.elinext.holidays.models.Day(1,2,3,it.holidayDate,true,it.comment))
+        allYearsMap[year.value]?.let { listHolidays ->
+            Column(
+                modifier = Modifier
+                    .background(MaterialTheme.colors.background)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    modifier = Modifier.padding(16.dp),
+                    text = "holidays",
+                    color = MaterialTheme.colors.primaryVariant
+                )
+                listHolidays.let { holiday ->
+                    LazyColumn(Modifier.height(if (listHolidays.size > 1) 500.dp else 150.dp)) {
+                        itemsIndexed(holiday) { _, currentHoliday ->
+                            currentHoliday.let {
+                                HolidayItem(
+                                    com.elinext.holidays.models.Day(
+                                        1,
+                                        2,
+                                        3,
+                                        it.holidayDate,
+                                        true,
+                                        it.comment
+                                    )
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
         }
     }
 
@@ -203,7 +213,6 @@ class YearFragment : BaseFragment() {
 
     @Composable
     fun YearScreen(year: Int) {
-        val currentYear = Year.now().value
         val list = arrayListOf<CalendarState>()
         for (i in 1..12) {
             val state = getState(year, i)
@@ -211,147 +220,178 @@ class YearFragment : BaseFragment() {
         }
         val configuration = LocalConfiguration.current
         val screenWidth = configuration.screenWidthDp.dp
-        LazyVerticalGrid(
-            modifier = Modifier
-                .width(screenWidth)
-                .height(500.dp),
-            columns = GridCells.Fixed(3),
-        ) {
-            items(list.size) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
-                    .width(screenWidth / 3)
-                    .padding(horizontal = 2.dp)
-                    .clickable {
-                    }
-                    .clip(shape = RoundedCornerShape(4.dp))
-                    .aspectRatio(1f)
-                    .border(
-                        border = BorderStroke(
-                            color = MaterialTheme.colors.background,
-                            width = 1.dp
-                        ),
-                        shape = RoundedCornerShape(4.dp)
-                    ))
-                {
-                    DaysOfWeek(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
-                    HorizontalCalendar(
-                        state = list[it],
-                        calendarScrollPaged = false,
-                        userScrollEnabled = false,
-                        dayContent = { DayForYear(it) },
-                    )
-                }
+        Column( modifier = Modifier
+            .width(screenWidth)) {
+            Row(
+                modifier = Modifier
+                    .width(screenWidth)
+            ) {
+                YearCalendarItem(list[0], screenWidth)
+                YearCalendarItem(list[1], screenWidth)
+                YearCalendarItem(list[2], screenWidth)
+            }
+            Row(
+                modifier = Modifier
+                    .width(screenWidth)
+            ) {
+                YearCalendarItem(list[3], screenWidth)
+                YearCalendarItem(list[4], screenWidth)
+                YearCalendarItem(list[5], screenWidth)
+            }
+            Row(
+                modifier = Modifier
+                    .width(screenWidth)
+            ) {
+                YearCalendarItem(list[6], screenWidth)
+                YearCalendarItem(list[7], screenWidth)
+                YearCalendarItem(list[8], screenWidth)
+            }
+            Row(
+                modifier = Modifier
+                    .width(screenWidth)
+            ) {
+                YearCalendarItem(list[9], screenWidth)
+                YearCalendarItem(list[10], screenWidth)
+                YearCalendarItem(list[11], screenWidth)
             }
         }
     }
 
 
-    @Composable
-    fun DaysOfWeek(daysOfWeek: List<DayOfWeek>) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp)
-        ) {
-            for (dayOfWeek in daysOfWeek) {
-                Text(
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center,
-                    text = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-                        .toString(),
-                    fontSize = 9.sp,
-                    maxLines = 1,
-                    color = if (dayOfWeek.name == DayOfWeek.SATURDAY.name || dayOfWeek.name == DayOfWeek.SUNDAY.name) Color.Red else Color.Black
-                )
-            }
+@Composable
+fun YearCalendarItem(calendarState: CalendarState, screenWidth: Dp) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
+        .width(screenWidth / 3)
+        .padding(horizontal = 2.dp)
+        .clickable {
         }
+        .clip(shape = RoundedCornerShape(4.dp))
+        .aspectRatio(1f)
+        .border(
+            border = BorderStroke(
+                color = MaterialTheme.colors.background,
+                width = 1.dp
+            ),
+            shape = RoundedCornerShape(4.dp)
+        ))
+    {
+        DaysOfWeek(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
+        HorizontalCalendar(
+            state = calendarState,
+            calendarScrollPaged = false,
+            userScrollEnabled = false,
+            dayContent = { DayForYear(it) },
+        )
     }
+}
 
 
-    @Composable
-    fun DayForYear(day: CalendarDay) {
-        val today = MonthDay.now()
-        val isDayShownMonth = day.position.name == DayPosition.MonthDate.name
-        val isCurrentMonth = (day.date.month.name == today.month.name && isDayShownMonth)
-        val isHoliday =
-            viewModel.holidayCheck(day.date.dayOfMonth, day.date.monthValue - 1, day.date.year)
-        val isTodayDay = today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth
-        val holiday = listOfHolidays?.firstOrNull {
-            formattedData(it.holidayDate) == "${day.date}"
-        }
-
-        val modifierForDay =
-            if (isTodayDay) Modifier
-                .drawBehind {
-                    drawCircle(
-                        color = Color.Gray,
-                        radius = this.size.maxDimension
-                    )
-                }
-            else if (holiday != null) {
-                Modifier.clickable {
-                    Toast.makeText(
-                        context,
-                        holiday.comment,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } else Modifier
-
-        val color: Color = if (isTodayDay) {
-            Color.White
-        } else if (holiday?.holidayType == Constants.WORKING_WEEKEND) {
-            Color.Blue
-        } else if (isHoliday) {
-            Color.Red
-        } else if (isDayShownMonth) {
-            Color.Black
-        } else
-            Color.Gray
-
-        Box(
-            modifier = Modifier
-                .aspectRatio(1f), // This is important for square sizing!
-            contentAlignment = Alignment.Center
-        ) {
+@Composable
+fun DaysOfWeek(daysOfWeek: List<DayOfWeek>) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp)
+    ) {
+        for (dayOfWeek in daysOfWeek) {
             Text(
-                modifier = modifierForDay,
-                text = day.date.dayOfMonth.toString(),
-                color = color,
-                fontSize = 8.sp
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center,
+                text = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                    .toString(),
+                fontSize = 9.sp,
+                maxLines = 1,
+                color = if (dayOfWeek.name == DayOfWeek.SATURDAY.name || dayOfWeek.name == DayOfWeek.SUNDAY.name) Color.Red else Color.Black
             )
         }
     }
+}
 
-    @Composable
-    fun getState(yearValue: Int, monthValue: Int): CalendarState {
-        val firstMonth = remember { YearMonth.of(yearValue, monthValue) }
-        val startMonth = remember { firstMonth.minusMonths(100) } // Adjust as needed
-        val endMonth = remember { firstMonth.plusMonths(100) } // Adjust as needed
-        val firstDayOfWeek = remember { firstDayOfWeekFromLocale() }
 
-        return rememberCalendarState(
-            startMonth = startMonth,
-            endMonth = endMonth,
-            firstVisibleMonth = firstMonth,
-            firstDayOfWeek = firstDayOfWeek
+@Composable
+fun DayForYear(day: CalendarDay) {
+    val today = MonthDay.now()
+    val isDayShownMonth = day.position.name == DayPosition.MonthDate.name
+    val isCurrentMonth = (day.date.month.name == today.month.name && isDayShownMonth)
+    val isHoliday =
+        viewModel.holidayCheck(day.date.dayOfMonth, day.date.monthValue - 1, day.date.year)
+    val isTodayDay = today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth
+    val holiday = listOfHolidays?.firstOrNull {
+        formattedData(it.holidayDate) == "${day.date}"
+    }
+
+    val modifierForDay =
+        if (isTodayDay) Modifier
+            .drawBehind {
+                drawCircle(
+                    color = Color.Gray,
+                    radius = this.size.maxDimension
+                )
+            }
+        else if (holiday != null) {
+            Modifier.clickable {
+                Toast.makeText(
+                    context,
+                    holiday.comment,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        } else Modifier
+
+    val color: Color = if (isTodayDay) {
+        Color.White
+    } else if (holiday?.holidayType == Constants.WORKING_WEEKEND) {
+        Color.Blue
+    } else if (isHoliday) {
+        Color.Red
+    } else if (isDayShownMonth) {
+        Color.Black
+    } else
+        Color.Gray
+
+    Box(
+        modifier = Modifier
+            .aspectRatio(1f), // This is important for square sizing!
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            modifier = modifierForDay,
+            text = day.date.dayOfMonth.toString(),
+            color = color,
+            fontSize = 8.sp
         )
     }
+}
 
-    @OptIn(ExperimentalFoundationApi::class)
-    @Composable
-    private fun pagedFlingBehavior(state: LazyListState): FlingBehavior {
-        val snappingLayout = remember(state) {
-            SnapLayoutInfoProvider(state) { _, _ -> 0f }
-        }
-        return rememberSnapFlingBehavior(snappingLayout)
+@Composable
+fun getState(yearValue: Int, monthValue: Int): CalendarState {
+    val firstMonth = remember { YearMonth.of(yearValue, monthValue) }
+    val startMonth = remember { firstMonth.minusMonths(100) } // Adjust as needed
+    val endMonth = remember { firstMonth.plusMonths(100) } // Adjust as needed
+    val firstDayOfWeek = remember { firstDayOfWeekFromLocale() }
+
+    return rememberCalendarState(
+        startMonth = startMonth,
+        endMonth = endMonth,
+        firstVisibleMonth = firstMonth,
+        firstDayOfWeek = firstDayOfWeek
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun pagedFlingBehavior(state: LazyListState): FlingBehavior {
+    val snappingLayout = remember(state) {
+        SnapLayoutInfoProvider(state) { _, _ -> 0f }
     }
+    return rememberSnapFlingBehavior(snappingLayout)
+}
 
-    @Composable
-    private fun continuousFlingBehavior(): FlingBehavior = ScrollableDefaults.flingBehavior()
+@Composable
+private fun continuousFlingBehavior(): FlingBehavior = ScrollableDefaults.flingBehavior()
 
-    @Composable
-    fun flingBehavior(isPaged: Boolean, state: LazyListState): FlingBehavior {
-        return if (isPaged) pagedFlingBehavior(state) else continuousFlingBehavior()
-    }
+@Composable
+fun flingBehavior(isPaged: Boolean, state: LazyListState): FlingBehavior {
+    return if (isPaged) pagedFlingBehavior(state) else continuousFlingBehavior()
+}
 }
