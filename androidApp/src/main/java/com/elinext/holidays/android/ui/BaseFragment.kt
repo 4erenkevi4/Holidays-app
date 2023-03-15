@@ -42,11 +42,9 @@ import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.DayPosition
-import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.MonthDay
-import java.time.Year
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -79,7 +77,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     }
 
     @Composable
-    override fun CustomTabs(calendarState: CalendarState) {
+    override fun CustomTabs(calendarState: CalendarState, year:  State<Int>?) {
 
         val id =
             if (findNavController().currentDestination?.label == MonthFragment::class.simpleName) 0 else 1
@@ -127,7 +125,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CalendarContent(calendarState)
+            CalendarContent(calendarState, year)
         }
     }
 
@@ -137,13 +135,11 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
             val currentMonth = remember { YearMonth.now() }
             val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
             val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
-            val firstDayOfWeek =
-                remember { firstDayOfWeekFromLocale() } // Available from the library
             val calendarState = rememberCalendarState(
                 startMonth = startMonth,
                 endMonth = endMonth,
                 firstVisibleMonth = currentMonth,
-                firstDayOfWeek = firstDayOfWeek
+                firstDayOfWeek = DayOfWeek.MONDAY
             )
             Scaffold(
                 modifier = Modifier
@@ -159,7 +155,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     modifier = Modifier.fillMaxSize()
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CustomTabs(calendarState)
+                        CustomTabs(calendarState, null)
                     }
                 }
             }
@@ -331,7 +327,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
 
     @Composable
-    open fun InfoView(calendarState: CalendarState?) {
+    open fun InfoView(calendarState: CalendarState?, year: State<Int>?) {
         calendarState?.firstVisibleMonth?.yearMonth?.let {month->
             val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1)
             var text = "$number working days (${number * 8} working hours)"
@@ -360,7 +356,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
 
     @Composable
-    open fun HolidaysView(calendarState: CalendarState?) {
+    open fun HolidaysView(calendarState: CalendarState?, year: State<Int>?) {
         calendarState?.firstVisibleMonth?.yearMonth?.let {month->
             val listHolidays =
                 viewModel.getDaysOfMonth(year = month.year, month = month.monthValue - 1)
