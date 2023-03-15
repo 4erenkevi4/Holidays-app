@@ -32,10 +32,7 @@ import com.elinext.holidays.utils.Constants
 import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
-import com.kizitonwose.calendar.core.CalendarDay
-import com.kizitonwose.calendar.core.DayPosition
-import com.kizitonwose.calendar.core.daysOfWeek
-import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
+import com.kizitonwose.calendar.core.*
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.MonthDay
@@ -293,15 +290,17 @@ class YearFragment : BaseFragment() {
 
     @Composable
     fun DayForYear(day: CalendarDay) {
+        if (day.position != DayPosition.MonthDate) return
         val today = MonthDay.now()
         val isDayShownMonth = day.position.name == DayPosition.MonthDate.name
-        val isCurrentMonth = (day.date.month.name == today.month.name && isDayShownMonth)
-        val isHoliday =
-            viewModel.holidayCheck(day.date.dayOfMonth, day.date.monthValue - 1, day.date.year)
+        val isCurrentMonth = (day.date.month.name == today.month.name && isDayShownMonth) && (day.date.year == Year.now().value)
         val isTodayDay = today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth
-        val holiday = listOfHolidays?.firstOrNull {
+        val holidayInfo = listOfHolidays?.firstOrNull {
             formattedData(it.holidayDate) == "${day.date}"
         }
+        val isHoliday =
+            day.date.dayOfWeek == DayOfWeek.SUNDAY || day.date.dayOfWeek == DayOfWeek.SATURDAY || holidayInfo?.holidayType == Constants.HOLIDAY
+
 
         val modifierForDay =
             if (isTodayDay) Modifier
@@ -311,11 +310,11 @@ class YearFragment : BaseFragment() {
                         radius = this.size.maxDimension
                     )
                 }
-            else if (holiday != null) {
+            else if (holidayInfo != null) {
                 Modifier.clickable {
                     Toast.makeText(
                         context,
-                        holiday.comment,
+                        holidayInfo.comment,
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -323,7 +322,7 @@ class YearFragment : BaseFragment() {
 
         val color: Color = if (isTodayDay) {
             Color.White
-        } else if (holiday?.holidayType == Constants.WORKING_WEEKEND) {
+        } else if (holidayInfo?.holidayType == Constants.WORKING_WEEKEND) {
             Color.Blue
         } else if (isHoliday) {
             Color.Red
@@ -349,15 +348,14 @@ class YearFragment : BaseFragment() {
     @Composable
     fun getState(yearValue: Int, monthValue: Int): CalendarState {
         val firstMonth = remember { YearMonth.of(yearValue, monthValue) }
-        val startMonth = remember { firstMonth.minusMonths(100) } // Adjust as needed
-        val endMonth = remember { firstMonth.plusMonths(100) } // Adjust as needed
-        val firstDayOfWeek = remember { firstDayOfWeekFromLocale() }
+        // val startMonth = remember { firstMonth.minusMonths(100) } // Adjust as needed
+        //  val endMonth = remember { firstMonth.plusMonths(100) } // Adjust as needed
 
         return rememberCalendarState(
-            startMonth = startMonth,
-            endMonth = endMonth,
-            firstVisibleMonth = firstMonth,
-            firstDayOfWeek = firstDayOfWeek
+            startMonth = firstMonth,
+            //endMonth = endMonth,
+            // firstVisibleMonth = firstMonth,
+            firstDayOfWeek = DayOfWeek.MONDAY
         )
     }
 

@@ -250,12 +250,14 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
         val today = MonthDay.now()
         val isDayShownMonth = day.position.name == DayPosition.MonthDate.name
         val isCurrentMonth = (day.date.month.name == today.month.name && isDayShownMonth)
-        val isHoliday =
-            viewModel.holidayCheck(day.date.dayOfMonth, day.date.monthValue - 1, day.date.year)
+       // val isHoliday =
+           // viewModel.holidayCheck(day.date.dayOfMonth, day.date.monthValue - 1, day.date.year)
         val isTodayDay = today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth
-        val holiday = listOfHolidays?.firstOrNull {
+        val holidayInfo = listOfHolidays?.firstOrNull {
             formattedData(it.holidayDate) == "${day.date}"
         }
+        val isHoliday =  day.date.dayOfWeek == DayOfWeek.SUNDAY || day.date.dayOfWeek == DayOfWeek.SATURDAY || holidayInfo?.holidayType == Constants.HOLIDAY
+
         val modifierForDay =
             if (isTodayDay) Modifier
                 .drawBehind {
@@ -264,11 +266,11 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                         radius = this.size.maxDimension
                     )
                 }
-            else if (holiday != null) {
+            else if (holidayInfo != null) {
                 Modifier.clickable {
                     Toast.makeText(
                         context,
-                        holiday.comment,
+                        holidayInfo.comment,
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -276,7 +278,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
         val color: Color = if (isTodayDay) {
             Color.White
-        } else if (holiday?.holidayType == Constants.WORKING_WEEKEND) {
+        } else if (holidayInfo?.holidayType == Constants.WORKING_WEEKEND) {
             Color.Blue
         } else if (isHoliday) {
             Color.Red
