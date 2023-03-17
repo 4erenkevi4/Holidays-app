@@ -77,7 +77,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     }
 
     @Composable
-    override fun CustomTabs(calendarState: CalendarState, year:  State<Int>?) {
+    override fun CustomTabs(calendarState: CalendarState) {
 
         val id =
             if (findNavController().currentDestination?.label == MonthFragment::class.simpleName) 0 else 1
@@ -125,7 +125,8 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CalendarContent(calendarState, year)
+            InfoView(calendarState, null)
+            CalendarContent(calendarState)
         }
     }
 
@@ -154,8 +155,9 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    // CustomTabs(calendarState)
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CustomTabs(calendarState, null)
+                        CustomTabs(calendarState)
                     }
                 }
             }
@@ -329,7 +331,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
 
     @Composable
-    open fun InfoView(calendarState: CalendarState?, year: State<Int>?) {
+    open fun InfoView(calendarState: CalendarState?, yearRemember: MutableState<Int>?) {
         calendarState?.firstVisibleMonth?.yearMonth?.let {month->
             val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1)
             var text = "$number working days (${number * 8} working hours)"
@@ -358,7 +360,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
 
     @Composable
-    open fun HolidaysView(calendarState: CalendarState?, year: State<Int>?) {
+    open fun HolidaysView(calendarState: CalendarState?) {
         calendarState?.firstVisibleMonth?.yearMonth?.let {month->
             val listHolidays =
                 viewModel.getDaysOfMonth(year = month.year, month = month.monthValue - 1)

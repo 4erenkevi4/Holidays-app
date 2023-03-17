@@ -6,7 +6,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.FlingBehavior
-import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
@@ -25,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.fragment.findNavController
 import com.elinext.holidays.android.MyApplicationTheme
 import com.elinext.holidays.android.R
 import com.elinext.holidays.models.Holiday
@@ -59,24 +59,19 @@ class YearFragment : BaseFragment() {
         }
     }
 
+    @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
     override fun GreetingView() {
         val currentYear = Year.now().value
-        val year = viewModel.curentYear.collectAsState(initial = currentYear)
+
+        val yearRemember = remember {
+            mutableStateOf(currentYear)
+        }
         MyApplicationTheme {
-            val currentMonth = remember { YearMonth.now() }
-            val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
-            val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
-            val calendarState = rememberCalendarState(
-                startMonth = startMonth,
-                endMonth = endMonth,
-                firstVisibleMonth = currentMonth,
-                firstDayOfWeek = DayOfWeek.MONDAY
-            )
             Scaffold(
                 modifier = Modifier
                     .fillMaxSize(),
-                topBar = { TopBar(year.value.toString()) },
+                topBar = { TopBar(currentYear.toString()) },
                 backgroundColor = MaterialTheme.colors.background,
                 contentColor = Color.White
             ) { value ->
@@ -85,23 +80,92 @@ class YearFragment : BaseFragment() {
                     modifier = Modifier.fillMaxSize()
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CustomTabs(calendarState, year)
+                        // CustomTabs(calendarState)
+                        val id =
+                            if (findNavController().currentDestination?.label == MonthFragment::class.simpleName) 0 else 1
+                        var selectedIndex by remember { mutableStateOf(id) }
+
+                        val list = listOf("Month", "Year")
+                        TabRow(selectedTabIndex = selectedIndex,
+                            backgroundColor = Color.Gray,
+                            indicator = {
+                                Box {}
+                            }
+                        ) {
+                            list.forEachIndexed { index, text ->
+                                val selected = selectedIndex == index
+                                Tab(
+                                    modifier = if (selected) Modifier
+                                        .background(
+                                            Color.White
+                                        )
+                                    else Modifier
+                                        .background(
+                                            MaterialTheme.colors.background
+                                        ),
+                                    selected = selected,
+                                    onClick = {
+                                        selectedIndex = index
+                                        if (selectedIndex == 0) {
+                                            findNavController().navigate(R.id.action_global_monthFragment)
+                                        } else {
+                                            findNavController().navigate(R.id.action_global_yearFragment)
+                                        }
+                                    },
+                                    text = {
+                                        Text(
+                                            text = text,
+                                            color = if (selected) MaterialTheme.colors.primaryVariant else Color.Gray
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            InfoView(null, yearRemember)
+                            val items = allYearsMap.keys.toList()
+                            val lazyListState = rememberLazyListState()
+                            rememberCoroutineScope().launch {
+                                lazyListState.scrollToItem(items.lastIndex)
+                            }
+                            LazyRow(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                state = lazyListState,
+                                horizontalArrangement = Arrangement.spacedBy(0.dp),
+                                flingBehavior = pagedFlingBehavior(lazyListState),
+                            ) {
+                                itemsIndexed(items) { index, item ->
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth(),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        YearScreen(item)
+                                        //yearState.value = item
+                                        yearRemember.value = item
+                                        //viewModel.setYearInTearFragment(item)
+                                    }
+
+                                }
+                            }
+                            HolidaysView(calendarState = null)
+                        }
                     }
                 }
             }
         }
     }
 
-    @Composable
-    override fun CalendarContent(calendarState: CalendarState, year: State<Int>?) {
-        InfoView(null, year)
-        TestRow(allYearsMap.keys.toList())
-        HolidaysView(null, year)
-    }
 
     @Composable
-    override fun HolidaysView(calendarState: CalendarState?, year: State<Int>?) {
-        allYearsMap[year?.value]?.let { listHolidays ->
+    override fun HolidaysView(calendarState: CalendarState?) {
+        allYearsMap[1]?.let { listHolidays ->
             Column(
                 modifier = Modifier
                     .background(MaterialTheme.colors.background)
@@ -135,10 +199,10 @@ class YearFragment : BaseFragment() {
     }
 
     @Composable
-    override fun InfoView(calendarState: CalendarState?, year: State<Int>?) {
+    override fun InfoView(calendarState: CalendarState?, yearRemember: MutableState<Int>?) {
         val context = context ?: return
         val oficeId = viewModel.getOfficeIdInPreferences(context, false)
-        viewModel.getQuantityWorkingDays(year?.value.toString(), oficeId ?: "1")
+        viewModel.getQuantityWorkingDays(yearRemember?.value.toString(), oficeId ?: "1")
         val number = viewModel.quantityWorkingDaysInYear.collectAsState(initial = "0")
         var text = "${number.value} working days"
         OutlinedTextField(
@@ -150,7 +214,7 @@ class YearFragment : BaseFragment() {
             shape = RoundedCornerShape(10.dp),
             label = {
                 Text(
-                    "${year?.value} year info:",
+                    "${yearRemember?.value.toString()} year info:",
                     color = MaterialTheme.colors.primaryVariant,
                     fontSize = 14.sp
                 )
@@ -163,29 +227,11 @@ class YearFragment : BaseFragment() {
         )
     }
 
-    @SuppressLint("CoroutineCreationDuringComposition")
+    @SuppressLint("CoroutineCreationDuringComposition", "SuspiciousIndentation")
     @Composable
-    fun TestRow(items: List<Int>) {
-        val configuration = LocalConfiguration.current
-        val screenWidth = configuration.screenWidthDp.dp
-        val lazyListState = rememberLazyListState()
-        val scope = rememberCoroutineScope()
-//
-        scope.launch {
-            lazyListState.scrollToItem(items.lastIndex)
-        }
-        LazyRow(
-            modifier = Modifier
-                .width(screenWidth),
-            state = lazyListState,
-            horizontalArrangement = Arrangement.spacedBy(0.dp),
-            flingBehavior = flingBehavior(true, lazyListState),
-        ) {
-            itemsIndexed(items) { index, item ->
-                viewModel.setYearInTearFragment(item)
-                YearScreen(item)
-            }
-        }
+    fun TestRow() {
+
+
     }
 
 
@@ -193,8 +239,7 @@ class YearFragment : BaseFragment() {
     fun YearScreen(year: Int) {
         val list = arrayListOf<CalendarState>()
         for (i in 1..12) {
-            val state = getState(year, i)
-            list.add(state)
+            list.add(getState(year, i))
         }
         val configuration = LocalConfiguration.current
         val screenWidth = configuration.screenWidthDp.dp
@@ -293,7 +338,8 @@ class YearFragment : BaseFragment() {
         if (day.position != DayPosition.MonthDate) return
         val today = MonthDay.now()
         val isDayShownMonth = day.position.name == DayPosition.MonthDate.name
-        val isCurrentMonth = (day.date.month.name == today.month.name && isDayShownMonth) && (day.date.year == Year.now().value)
+        val isCurrentMonth =
+            (day.date.month.name == today.month.name && isDayShownMonth) && (day.date.year == Year.now().value)
         val isTodayDay = today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth
         val holidayInfo = listOfHolidays?.firstOrNull {
             formattedData(it.holidayDate) == "${day.date}"
@@ -346,18 +392,10 @@ class YearFragment : BaseFragment() {
     }
 
     @Composable
-    fun getState(yearValue: Int, monthValue: Int): CalendarState {
-        val firstMonth = remember { YearMonth.of(yearValue, monthValue) }
-        // val startMonth = remember { firstMonth.minusMonths(100) } // Adjust as needed
-        //  val endMonth = remember { firstMonth.plusMonths(100) } // Adjust as needed
-
-        return rememberCalendarState(
-            startMonth = firstMonth,
-            //endMonth = endMonth,
-            // firstVisibleMonth = firstMonth,
-            firstDayOfWeek = DayOfWeek.MONDAY
-        )
-    }
+    fun getState(yearValue: Int, monthValue: Int): CalendarState = rememberCalendarState(
+        startMonth = YearMonth.of(yearValue, monthValue),
+        firstDayOfWeek = DayOfWeek.MONDAY
+    )
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
@@ -366,13 +404,5 @@ class YearFragment : BaseFragment() {
             SnapLayoutInfoProvider(state) { _, _ -> 0f }
         }
         return rememberSnapFlingBehavior(snappingLayout)
-    }
-
-    @Composable
-    private fun continuousFlingBehavior(): FlingBehavior = ScrollableDefaults.flingBehavior()
-
-    @Composable
-    fun flingBehavior(isPaged: Boolean, state: LazyListState): FlingBehavior {
-        return if (isPaged) pagedFlingBehavior(state) else continuousFlingBehavior()
     }
 }

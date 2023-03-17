@@ -11,13 +11,12 @@ class MonthFragment : BaseFragment() {
 
 
     @Composable
-    override fun CalendarContent(calendarState: CalendarState, year: State<Int>?) {
-        InfoView(calendarState, year)
+    override fun CalendarContent(calendarState: CalendarState) {
         DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
         HorizontalCalendar(
             state = calendarState,
             dayContent = { Day(it) }
         )
-        HolidaysView(calendarState, year)
+        HolidaysView(calendarState)
     }
 }

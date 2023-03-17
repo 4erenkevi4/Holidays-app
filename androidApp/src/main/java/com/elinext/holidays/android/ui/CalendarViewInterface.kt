@@ -7,8 +7,8 @@ interface CalendarViewInterface {
 
 
     @Composable
-    fun CustomTabs(calendarState: CalendarState, year: State<Int>?){}
+    fun CustomTabs(calendarState: CalendarState){}
 
     @Composable
-    fun CalendarContent(calendarState: CalendarState, year: State<Int>?){}
+    fun CalendarContent(calendarState: CalendarState){}
 }
