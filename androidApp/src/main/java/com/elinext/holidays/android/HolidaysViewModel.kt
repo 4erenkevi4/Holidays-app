@@ -21,6 +21,7 @@ import com.elinext.holidays.utils.Constants.OFFICE_COUNTRY
 import com.elinext.holidays.utils.Constants.OFFICE_ID
 import com.elinext.holidays.utils.Constants.WEEK_STARTS_ON_MONDAY
 import com.elinext.holidays.utils.Constants.WORKING_WEEKEND
+import com.kizitonwose.calendar.compose.CalendarState
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -35,14 +36,20 @@ class HolidaysViewModel : ViewModel() {
 
     private val filteredMapOfHolidays = HashMap<Int, List<Holiday>?>()
 
-    private val _curentYear = Channel<Int>()
-    val curentYear: Flow<Int> = _curentYear.receiveAsFlow()
-
     private val _quantityWorkingDaysInYear = Channel<Int>()
     val quantityWorkingDaysInYear: Flow<Int> = _quantityWorkingDaysInYear.receiveAsFlow()
 
     private val _listOfCountries = Channel<MutableList<String>>()
     val listOfCountries: Flow<MutableList<String>> = _listOfCountries.receiveAsFlow()
+
+    private val _stateFlow = Channel<CalendarState>()
+    val stateFlow: Flow<CalendarState> = _stateFlow.receiveAsFlow()
+
+
+    suspend fun setState(state: CalendarState){
+        _stateFlow.send(state)
+    }
+
 
     private val _listOfHolidaysLiveData = MutableLiveData<Month>()
     val listOfHolidaysLiveData: LiveData<Month> = _listOfHolidaysLiveData
@@ -57,12 +64,6 @@ class HolidaysViewModel : ViewModel() {
     private val _holidaysLiveData = MutableLiveData<List<Holiday>>()
     val holidaysLiveData: LiveData<List<Holiday>> = _holidaysLiveData
 
-
-    fun setYearInTearFragment(year: Int){
-        viewModelScope.launch {
-            _curentYear.send(year)
-        }
-    }
 
     fun savePreferences(context: Context, country: String, officeId: String) {
         val sf: SharedPreferences = context.getSharedPreferences(COUNTRY, 0) ?: return
@@ -134,11 +135,7 @@ class HolidaysViewModel : ViewModel() {
                         }
                     }
                 }
-                if (year != null)
-                    _listOfMonthLiveData.value = filteredMapOfHolidays[year]
-                else
-                    _allHolidaysMapLivedata.value = filteredMapOfHolidays.toSortedMap()
-
+                _allHolidaysMapLivedata.value = filteredMapOfHolidays.toSortedMap()
             }
         }
     }

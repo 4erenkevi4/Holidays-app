@@ -5,15 +5,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -54,8 +51,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
 
     val viewModel: HolidaysViewModel by viewModels()
-
-    var listOfHolidays: List<Holiday>? = null
+    var allYearsMap: MutableMap<Int, List<Holiday>?> = mutableMapOf()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -67,9 +63,12 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val context = context ?: return
         viewModel.initListOfCountries()
-        viewModel.getHolidays(context, Calendar.getInstance().get(Calendar.YEAR))
-        viewModel.listOfMonthLiveData.observe(viewLifecycleOwner) {
-            listOfHolidays = it
+        if (allYearsMap.isEmpty()) {
+            viewModel.getHolidays(context, Calendar.getInstance().get(Calendar.YEAR))
+        }
+        viewModel.allHolidaysMapLivedata.observe(viewLifecycleOwner) {
+            allYearsMap = it
+            // listOfHolidays = it
             view.findViewById<ComposeView>(R.id.compose_view).setContent {
                 GreetingView()
             }
@@ -125,7 +124,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            InfoView(calendarState, null)
+            InfoView(calendarState)
             CalendarContent(calendarState)
         }
     }
@@ -175,20 +174,34 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     }
 
     @Composable
-    fun TopBar(title: String) {
+    fun TopBar(title: String?) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .width(200.dp),
-                text = title,
-                fontSize = 20.sp,
-                color = MaterialTheme.colors.onSurface
-            )
+            if (title == null) {
+                Icon(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .clickable {
+                            findNavController().navigate(R.id.action_global_monthFragment)
+                        },
+                    painter = painterResource(id = R.drawable.baseline_arrow_back_24),
+                    tint = Color.Gray,
+                    contentDescription = "back"
+                )
+                Spacer(modifier = Modifier.weight(1f))
+            } else {
+                Text(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .width(200.dp),
+                    text = title,
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colors.onSurface
+                )
+            }
             DropDownMenu()
             Icon(
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -252,13 +265,12 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
         val today = MonthDay.now()
         val isDayShownMonth = day.position.name == DayPosition.MonthDate.name
         val isCurrentMonth = (day.date.month.name == today.month.name && isDayShownMonth)
-       // val isHoliday =
-           // viewModel.holidayCheck(day.date.dayOfMonth, day.date.monthValue - 1, day.date.year)
         val isTodayDay = today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth
-        val holidayInfo = listOfHolidays?.firstOrNull {
+        val holidayInfo = allYearsMap[day.date.year]?.firstOrNull {
             formattedData(it.holidayDate) == "${day.date}"
         }
-        val isHoliday =  day.date.dayOfWeek == DayOfWeek.SUNDAY || day.date.dayOfWeek == DayOfWeek.SATURDAY || holidayInfo?.holidayType == Constants.HOLIDAY
+        val isHoliday =
+            day.date.dayOfWeek == DayOfWeek.SUNDAY || day.date.dayOfWeek == DayOfWeek.SATURDAY || holidayInfo?.holidayType == Constants.HOLIDAY
 
         val modifierForDay =
             if (isTodayDay) Modifier
@@ -331,8 +343,8 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
 
     @Composable
-    open fun InfoView(calendarState: CalendarState?, yearRemember: MutableState<Int>?) {
-        calendarState?.firstVisibleMonth?.yearMonth?.let {month->
+    open fun InfoView(calendarState: CalendarState?) {
+        calendarState?.firstVisibleMonth?.yearMonth?.let { month ->
             val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1)
             var text = "$number working days (${number * 8} working hours)"
             OutlinedTextField(
@@ -361,32 +373,32 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
     @Composable
     open fun HolidaysView(calendarState: CalendarState?) {
-        calendarState?.firstVisibleMonth?.yearMonth?.let {month->
+        calendarState?.firstVisibleMonth?.yearMonth?.let { month ->
             val listHolidays =
                 viewModel.getDaysOfMonth(year = month.year, month = month.monthValue - 1)
                     .filter { it?.description.isNullOrEmpty().not() }
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colors.background)
-                .fillMaxWidth()
-        ) {
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = "holidays",
-                color = MaterialTheme.colors.primaryVariant
-            )
-            listHolidays.let { holiday ->
-                LazyColumn(Modifier.height(if (listHolidays.size > 1) 500.dp else 150.dp)) {
-                    itemsIndexed(holiday) { _, currentHoliday ->
-                        currentHoliday?.let {
-                            HolidayItem(it)
+            Column(
+                modifier = Modifier
+                    .background(MaterialTheme.colors.background)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    modifier = Modifier.padding(16.dp),
+                    text = "holidays",
+                    color = MaterialTheme.colors.primaryVariant
+                )
+                listHolidays.let { holiday ->
+                    LazyColumn(Modifier.height(if (listHolidays.size > 1) 500.dp else 150.dp)) {
+                        itemsIndexed(holiday) { _, currentHoliday ->
+                            currentHoliday?.let {
+                                HolidayItem(it)
+                            }
                         }
                     }
                 }
             }
         }
     }
-}
 
 
     @Composable

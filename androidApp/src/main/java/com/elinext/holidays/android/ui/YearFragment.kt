@@ -1,8 +1,6 @@
 package com.elinext.holidays.android.ui
 
 import android.annotation.SuppressLint
-import android.os.Bundle
-import android.view.View
 import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.FlingBehavior
@@ -18,16 +16,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.elinext.holidays.android.MyApplicationTheme
 import com.elinext.holidays.android.R
-import com.elinext.holidays.models.Holiday
 import com.elinext.holidays.utils.Constants
 import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.HorizontalCalendar
@@ -43,35 +40,18 @@ import java.util.*
 
 class YearFragment : BaseFragment() {
 
-
-    var allYearsMap: MutableMap<Int, List<Holiday>?> = mutableMapOf()
-
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val context = context ?: return
-        viewModel.initListOfCountries()
-        viewModel.getHolidays(context)
-        viewModel.allHolidaysMapLivedata.observe(viewLifecycleOwner) {
-            allYearsMap = it
-            view.findViewById<ComposeView>(R.id.compose_view).setContent {
-                GreetingView()
-            }
-        }
-    }
+    var isScrolled = false
 
     @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
     override fun GreetingView() {
-        val currentYear = Year.now().value
-
-        val yearRemember = remember {
-            mutableStateOf(currentYear)
-        }
+        val items = allYearsMap.keys.toList()
+        val lazyListState = rememberLazyListState()
         MyApplicationTheme {
             Scaffold(
                 modifier = Modifier
                     .fillMaxSize(),
-                topBar = { TopBar(currentYear.toString()) },
+                topBar = { TopBar(null) },
                 backgroundColor = MaterialTheme.colors.background,
                 contentColor = Color.White
             ) { value ->
@@ -80,7 +60,6 @@ class YearFragment : BaseFragment() {
                     modifier = Modifier.fillMaxSize()
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        // CustomTabs(calendarState)
                         val id =
                             if (findNavController().currentDestination?.label == MonthFragment::class.simpleName) 0 else 1
                         var selectedIndex by remember { mutableStateOf(id) }
@@ -127,12 +106,14 @@ class YearFragment : BaseFragment() {
                                 .verticalScroll(rememberScrollState()),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            InfoView(null, yearRemember)
-                            val items = allYearsMap.keys.toList()
-                            val lazyListState = rememberLazyListState()
-                            rememberCoroutineScope().launch {
-                                lazyListState.scrollToItem(items.lastIndex)
+                            if (!isScrolled) {
+                                rememberCoroutineScope().launch {
+                                    lazyListState.scrollToItem(items.lastIndex)
+                                    isScrolled = true
+
+                                }
                             }
+                          //  InfoView(calendarState)
                             LazyRow(
                                 modifier = Modifier
                                     .fillMaxWidth(),
@@ -146,15 +127,12 @@ class YearFragment : BaseFragment() {
                                             .fillMaxWidth(),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        YearScreen(item)
-                                        //yearState.value = item
-                                        yearRemember.value = item
-                                        //viewModel.setYearInTearFragment(item)
+                                        val state = getState(yearValue = item, monthValue = 1)
+                                        InfoView(state)
+                                        YearScreen(state)
                                     }
-
                                 }
                             }
-                            HolidaysView(calendarState = null)
                         }
                     }
                 }
@@ -165,14 +143,16 @@ class YearFragment : BaseFragment() {
 
     @Composable
     override fun HolidaysView(calendarState: CalendarState?) {
-        allYearsMap[1]?.let { listHolidays ->
+        allYearsMap[calendarState?.firstVisibleMonth?.yearMonth?.year]?.let { listHolidays ->
             Column(
                 modifier = Modifier
                     .background(MaterialTheme.colors.background)
-                    .fillMaxWidth()
+                    .fillMaxSize()
             ) {
                 Text(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
                     text = "holidays",
                     color = MaterialTheme.colors.primaryVariant
                 )
@@ -199,22 +179,23 @@ class YearFragment : BaseFragment() {
     }
 
     @Composable
-    override fun InfoView(calendarState: CalendarState?, yearRemember: MutableState<Int>?) {
+    override fun InfoView(calendarState: CalendarState?) {
         val context = context ?: return
         val oficeId = viewModel.getOfficeIdInPreferences(context, false)
-        viewModel.getQuantityWorkingDays(yearRemember?.value.toString(), oficeId ?: "1")
+        viewModel.getQuantityWorkingDays(calendarState?.firstVisibleMonth?.yearMonth?.year.toString(), oficeId ?: "1")
         val number = viewModel.quantityWorkingDaysInYear.collectAsState(initial = "0")
         var text = "${number.value} working days"
         OutlinedTextField(
             modifier = Modifier.padding(16.dp),
             value = text,
             onValueChange = { text = it },
+
             readOnly = true,
             singleLine = true,
             shape = RoundedCornerShape(10.dp),
             label = {
                 Text(
-                    "${yearRemember?.value.toString()} year info:",
+                    "${calendarState?.firstVisibleMonth?.yearMonth?.year} year info:",
                     color = MaterialTheme.colors.primaryVariant,
                     fontSize = 14.sp
                 )
@@ -227,19 +208,12 @@ class YearFragment : BaseFragment() {
         )
     }
 
-    @SuppressLint("CoroutineCreationDuringComposition", "SuspiciousIndentation")
-    @Composable
-    fun TestRow() {
-
-
-    }
-
 
     @Composable
-    fun YearScreen(year: Int) {
+    fun YearScreen(state: CalendarState) {
         val list = arrayListOf<CalendarState>()
         for (i in 1..12) {
-            list.add(getState(year, i))
+            list.add(getState(state.firstVisibleMonth.yearMonth.year, i))
         }
         val configuration = LocalConfiguration.current
         val screenWidth = configuration.screenWidthDp.dp
@@ -279,6 +253,7 @@ class YearFragment : BaseFragment() {
                 YearCalendarItem(list[10], screenWidth)
                 YearCalendarItem(list[11], screenWidth)
             }
+            HolidaysView(state)
         }
     }
 
@@ -341,7 +316,7 @@ class YearFragment : BaseFragment() {
         val isCurrentMonth =
             (day.date.month.name == today.month.name && isDayShownMonth) && (day.date.year == Year.now().value)
         val isTodayDay = today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth
-        val holidayInfo = listOfHolidays?.firstOrNull {
+        val holidayInfo = allYearsMap[day.date.year]?.firstOrNull {
             formattedData(it.holidayDate) == "${day.date}"
         }
         val isHoliday =
@@ -391,11 +366,21 @@ class YearFragment : BaseFragment() {
         }
     }
 
+    @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
-    fun getState(yearValue: Int, monthValue: Int): CalendarState = rememberCalendarState(
-        startMonth = YearMonth.of(yearValue, monthValue),
-        firstDayOfWeek = DayOfWeek.MONDAY
-    )
+    fun getState(yearValue: Int, monthValue: Int): CalendarState {
+        val state =
+        rememberCalendarState(
+            startMonth = YearMonth.of(yearValue, monthValue),
+            firstDayOfWeek = DayOfWeek.MONDAY
+        )
+
+        lifecycleScope.launch(){
+            viewModel.setState(state)
+        }
+
+        return state
+    }
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
