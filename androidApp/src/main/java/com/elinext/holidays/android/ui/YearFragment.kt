@@ -21,7 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.lifecycleScope
+import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import com.elinext.holidays.android.MyApplicationTheme
 import com.elinext.holidays.android.R
@@ -113,7 +113,7 @@ class YearFragment : BaseFragment() {
 
                                 }
                             }
-                          //  InfoView(calendarState)
+                            //  InfoView(calendarState)
                             LazyRow(
                                 modifier = Modifier
                                     .fillMaxWidth(),
@@ -182,7 +182,10 @@ class YearFragment : BaseFragment() {
     override fun InfoView(calendarState: CalendarState?) {
         val context = context ?: return
         val oficeId = viewModel.getOfficeIdInPreferences(context, false)
-        viewModel.getQuantityWorkingDays(calendarState?.firstVisibleMonth?.yearMonth?.year.toString(), oficeId ?: "1")
+        viewModel.getQuantityWorkingDays(
+            calendarState?.firstVisibleMonth?.yearMonth?.year.toString(),
+            oficeId ?: "1"
+        )
         val number = viewModel.quantityWorkingDaysInYear.collectAsState(initial = "0")
         var text = "${number.value} working days"
         OutlinedTextField(
@@ -264,6 +267,14 @@ class YearFragment : BaseFragment() {
             .width(screenWidth / 3)
             .padding(horizontal = 2.dp)
             .clickable {
+                findNavController().navigate(
+                    R.id.action_global_monthFragment,
+                    bundleOf(
+                        Pair("year", calendarState.firstVisibleMonth.yearMonth.year),
+                        Pair("month", calendarState.firstVisibleMonth.yearMonth.month.value)
+                    )
+                )
+
             }
             .clip(shape = RoundedCornerShape(4.dp))
             .aspectRatio(1f)
@@ -364,22 +375,6 @@ class YearFragment : BaseFragment() {
                 fontSize = 8.sp
             )
         }
-    }
-
-    @SuppressLint("CoroutineCreationDuringComposition")
-    @Composable
-    fun getState(yearValue: Int, monthValue: Int): CalendarState {
-        val state =
-        rememberCalendarState(
-            startMonth = YearMonth.of(yearValue, monthValue),
-            firstDayOfWeek = DayOfWeek.MONDAY
-        )
-
-        lifecycleScope.launch(){
-            viewModel.setState(state)
-        }
-
-        return state
     }
 
     @OptIn(ExperimentalFoundationApi::class)

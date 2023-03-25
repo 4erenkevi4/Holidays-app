@@ -441,5 +441,13 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
         }
     }
 
+    @Composable
+    fun getState(yearValue: Int, monthValue: Int): CalendarState {
+        return rememberCalendarState(
+            startMonth = YearMonth.of(yearValue, monthValue),
+            firstDayOfWeek = DayOfWeek.MONDAY
+        )
+    }
+
 
 }
