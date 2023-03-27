@@ -113,7 +113,6 @@ class YearFragment : BaseFragment() {
 
                                 }
                             }
-                            //  InfoView(calendarState)
                             LazyRow(
                                 modifier = Modifier
                                     .fillMaxWidth(),

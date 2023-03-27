@@ -7,8 +7,14 @@ interface CalendarViewInterface {
 
 
     @Composable
-    fun CustomTabs(calendarState: CalendarState){}
+    fun CustomTabs(calendarState: CalendarState) {
+    }
 
     @Composable
-    fun CalendarContent(calendarState: CalendarState){}
+    fun GreetingView() {
+    }
+
+    @Composable
+    fun CalendarContent(calendarState: CalendarState) {
+    }
 }

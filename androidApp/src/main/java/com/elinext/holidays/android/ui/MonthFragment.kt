@@ -65,27 +65,12 @@ class MonthFragment : BaseFragment() {
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    // CustomTabs(calendarState)
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CustomTabs(calendarState)
                     }
                 }
             }
         }
-    }
-
-    @Composable
-    fun state(year: Int, month: Int): CalendarState {
-        val currentMonth = remember { YearMonth.of(year, month) }
-        val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
-        val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
-        val calendarState = rememberCalendarState(
-            startMonth = startMonth,
-            endMonth = endMonth,
-            firstVisibleMonth = currentMonth,
-            firstDayOfWeek = DayOfWeek.MONDAY
-        )
-        return calendarState
     }
 
     @Composable

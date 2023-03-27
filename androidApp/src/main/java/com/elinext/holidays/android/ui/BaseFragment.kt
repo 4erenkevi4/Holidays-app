@@ -130,40 +130,6 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     }
 
     @Composable
-    open fun GreetingView() {
-        MyApplicationTheme {
-            val currentMonth = remember { YearMonth.now() }
-            val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
-            val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
-            val calendarState = rememberCalendarState(
-                startMonth = startMonth,
-                endMonth = endMonth,
-                firstVisibleMonth = currentMonth,
-                firstDayOfWeek = DayOfWeek.MONDAY
-            )
-            Scaffold(
-                modifier = Modifier
-                    .fillMaxSize(),
-                topBar = {
-                    TopBar(getTitle(calendarState))
-                },
-                backgroundColor = MaterialTheme.colors.background,
-                contentColor = Color.White
-            ) { value ->
-                val padding = value
-                Surface(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    // CustomTabs(calendarState)
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CustomTabs(calendarState)
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
     fun getTitle(calendarState: CalendarState, onlyMonthName: Boolean = false): String {
         val month = calendarState.firstVisibleMonth
         val monthName = month.yearMonth.month.name
