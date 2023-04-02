@@ -170,7 +170,11 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
             }
             DropDownMenu()
             Icon(
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .clickable {
+                        findNavController().navigate(R.id.action_global_settingsFragment)
+                    },
                 painter = painterResource(id = R.drawable.ic_settings_24),
                 tint = Color.Gray,
                 contentDescription = "settings"

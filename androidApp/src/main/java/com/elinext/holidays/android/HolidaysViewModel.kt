@@ -17,6 +17,8 @@ import com.elinext.holidays.models.Month
 import com.elinext.holidays.models.Year
 import com.elinext.holidays.utils.Constants.COUNTRY
 import com.elinext.holidays.utils.Constants.HOLIDAY
+import com.elinext.holidays.utils.Constants.HOLIDAYS_APP
+import com.elinext.holidays.utils.Constants.NOTIFICATION_SETTINGS
 import com.elinext.holidays.utils.Constants.OFFICE_COUNTRY
 import com.elinext.holidays.utils.Constants.OFFICE_ID
 import com.elinext.holidays.utils.Constants.WEEK_STARTS_ON_MONDAY
@@ -66,7 +68,7 @@ class HolidaysViewModel : ViewModel() {
 
 
     fun savePreferences(context: Context, country: String, officeId: String) {
-        val sf: SharedPreferences = context.getSharedPreferences(COUNTRY, 0) ?: return
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0) ?: return
         val editor = sf.edit()
         editor.putString(OFFICE_COUNTRY, country)
         editor.putString(OFFICE_ID, officeId)
@@ -74,12 +76,25 @@ class HolidaysViewModel : ViewModel() {
     }
 
     fun getOfficeIdInPreferences(context: Context, ifNeedNameOffice: Boolean = true): String? {
-        val sf: SharedPreferences = context.getSharedPreferences(COUNTRY, 0)
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
         return if (ifNeedNameOffice)
             sf.getString(OFFICE_COUNTRY, getDeviceCountry(context))
         else
             sf.getString(OFFICE_ID, "1")
     }
+
+    fun saveNotificationToSp(context: Context, value: Boolean){
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
+        val editor = sf.edit()
+        editor.putBoolean(NOTIFICATION_SETTINGS, value)
+        editor.apply()
+    }
+
+    fun getNotificationFromSp(context: Context): Boolean {
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
+        return sf.getBoolean(NOTIFICATION_SETTINGS, false)
+    }
+
 
     private fun getDeviceCountry(context: Context): String {
         val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
