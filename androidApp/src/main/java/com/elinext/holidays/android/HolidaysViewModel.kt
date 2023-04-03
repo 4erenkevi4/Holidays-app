@@ -18,6 +18,8 @@ import com.elinext.holidays.models.Year
 import com.elinext.holidays.utils.Constants.COUNTRY
 import com.elinext.holidays.utils.Constants.HOLIDAY
 import com.elinext.holidays.utils.Constants.HOLIDAYS_APP
+import com.elinext.holidays.utils.Constants.NOTIFICATION_DAY
+import com.elinext.holidays.utils.Constants.NOTIFICATION_HOUR
 import com.elinext.holidays.utils.Constants.NOTIFICATION_SETTINGS
 import com.elinext.holidays.utils.Constants.OFFICE_COUNTRY
 import com.elinext.holidays.utils.Constants.OFFICE_ID
@@ -44,27 +46,11 @@ class HolidaysViewModel : ViewModel() {
     private val _listOfCountries = Channel<MutableList<String>>()
     val listOfCountries: Flow<MutableList<String>> = _listOfCountries.receiveAsFlow()
 
-    private val _stateFlow = Channel<CalendarState>()
-    val stateFlow: Flow<CalendarState> = _stateFlow.receiveAsFlow()
-
-
-    suspend fun setState(state: CalendarState){
-        _stateFlow.send(state)
-    }
-
-
-    private val _listOfHolidaysLiveData = MutableLiveData<Month>()
-    val listOfHolidaysLiveData: LiveData<Month> = _listOfHolidaysLiveData
-
-
-    private val _listOfMonthLiveData = MutableLiveData<List<Holiday>?>()
-    val listOfMonthLiveData: LiveData<List<Holiday>?> = _listOfMonthLiveData
-
     private val _allHolidaysMapLivedata = MutableLiveData<MutableMap<Int, List<Holiday>?>>()
     val allHolidaysMapLivedata: LiveData<MutableMap<Int, List<Holiday>?>> = _allHolidaysMapLivedata
 
-    private val _holidaysLiveData = MutableLiveData<List<Holiday>>()
-    val holidaysLiveData: LiveData<List<Holiday>> = _holidaysLiveData
+    private val _upcomingHolidaysLivedata = MutableLiveData<List<Holiday>>()
+    val upcomingHolidaysLivedata: LiveData<List<Holiday>> = _upcomingHolidaysLivedata
 
 
     fun savePreferences(context: Context, country: String, officeId: String) {
@@ -94,6 +80,31 @@ class HolidaysViewModel : ViewModel() {
         val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
         return sf.getBoolean(NOTIFICATION_SETTINGS, false)
     }
+
+    fun saveNotificationDateToSp(context: Context, value: Int){
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
+        val editor = sf.edit()
+        editor.putInt(NOTIFICATION_DAY, value)
+        editor.apply()
+    }
+
+    fun getNotificationDateFromSp(context: Context): Int {
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
+        return sf.getInt(NOTIFICATION_DAY, 0)
+    }
+
+    fun saveNotificationHourToSp(context: Context, value: Int){
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
+        val editor = sf.edit()
+        editor.putInt(NOTIFICATION_HOUR, value)
+        editor.apply()
+    }
+
+    fun getNotificationHourFromSp(context: Context): Int {
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
+        return sf.getInt(NOTIFICATION_HOUR, 0)
+    }
+
 
 
     private fun getDeviceCountry(context: Context): String {
@@ -137,7 +148,6 @@ class HolidaysViewModel : ViewModel() {
             EngineSDK.apiModule.holidaysRepository.getAllDays()?.years?.let {
                 calendar.time = Date()
                 val sortedYears = it.keys.sorted()
-                val upcomingHolidays = arrayListOf<Holiday>()
                 sortedYears.forEach { yearInSortedYears ->
                     val filteredHolidaysMapByOffice =
                         it[yearInSortedYears]?.filter { holiday ->
@@ -146,7 +156,7 @@ class HolidaysViewModel : ViewModel() {
                     filteredMapOfHolidays[yearInSortedYears] = filteredHolidaysMapByOffice
                     if (yearInSortedYears == year) {
                         filteredHolidaysMapByOffice?.let { holidays ->
-                            upcomingHolidays.addAll(holidays)
+                            _upcomingHolidaysLivedata.value = holidays
                         }
                     }
                 }

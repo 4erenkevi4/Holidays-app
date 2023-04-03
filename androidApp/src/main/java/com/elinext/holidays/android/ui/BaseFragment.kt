@@ -42,6 +42,7 @@ import com.kizitonwose.calendar.core.DayPosition
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.MonthDay
+import java.time.Year
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -63,6 +64,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val context = context ?: return
         viewModel.initListOfCountries()
+        viewModel.getHolidays(context,Year.now().value)
         if (allYearsMap.isEmpty()) {
             viewModel.getHolidays(context, Calendar.getInstance().get(Calendar.YEAR))
         }

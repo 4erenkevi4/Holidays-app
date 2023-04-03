@@ -1,17 +1,19 @@
 package com.elinext.holidays.android.ui
 
+import android.annotation.SuppressLint
 import android.app.AlarmManager
+import android.app.DatePickerDialog
 import android.app.PendingIntent
+import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -19,42 +21,62 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.navigation.fragment.findNavController
-import com.elinext.holidays.android.HolidaysViewModel
+import androidx.lifecycle.lifecycleScope
 import com.elinext.holidays.android.MyApplicationTheme
 import com.elinext.holidays.android.MyNotificationReceiver
 import com.elinext.holidays.android.R
-import com.kizitonwose.calendar.compose.rememberCalendarState
-import java.time.DayOfWeek
+import com.elinext.holidays.models.Holiday
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.time.YearMonth
 import java.util.*
 
-class SettingsFragment : Fragment() {
+class SettingsFragment : BaseFragment() {
 
-    val viewModel: HolidaysViewModel by viewModels()
-
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_compose, container, false)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        viewModel.initListOfCountries()
         view.findViewById<ComposeView>(R.id.compose_view).setContent {
             GreetingView()
+        }
+
+        viewModel.upcomingHolidaysLivedata.observe(viewLifecycleOwner) {
+            lifecycleScope.launch {
+                setNotificationsForDates(it)
+            }
         }
     }
 
     @Composable
-    fun GreetingView() {
+    override fun GreetingView() {
+        val context = context ?: return
+        val isChecked = viewModel.getNotificationFromSp(context)
+        val checkedState = remember { mutableStateOf(isChecked) }
+        val time = remember { mutableStateOf(12) }
+        val date = remember { mutableStateOf(22) }
+        val datePickerDialog = DatePickerDialog(
+            context
+        ).apply {
+            val calendarTime = Calendar.getInstance()
+            calendarTime.set(Calendar.MONTH, calendarTime.get(Calendar.MONTH) + 1)
+            calendarTime.set(Calendar.DATE, 1)
+            datePicker.minDate = calendarTime.timeInMillis
+            calendarTime.set(Calendar.DATE, calendarTime.getMaximum(Calendar.DATE))
+            datePicker.maxDate = calendarTime.timeInMillis
+            this.setOnDateSetListener { _, _, _, dayOfMonth ->
+                date.value = dayOfMonth
+            }
+        }
+        val timePickerDialog = TimePickerDialog(
+            context,
+            { _, hour: Int, _: Int ->
+                time.value = hour
+            }, 12, 0, true
+        )
         MyApplicationTheme {
             Scaffold(
                 modifier = Modifier
@@ -69,23 +91,106 @@ class SettingsFragment : Fragment() {
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 16.dp)) {
-                        NotificationRow()
-                        CreateSettingRow("Office country", R.drawable.ic_geo)
-                        CreateSettingRow("Day of notification", R.drawable.ic_calendar_date)
-                        CreateSettingRow("Time of notification", R.drawable.ic_notification_time)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(horizontal = 30.dp)
+                    ) {
+                        // This is Notification Row
+                        Box() {
+                            Image(
+                                modifier = Modifier
+                                    .padding(start = 6.dp)
+                                    .align(Alignment.CenterStart),
+                                painter = painterResource(id = R.drawable.ic_notification),
+                                contentDescription = null,
 
+                                )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    modifier = Modifier
+                                        .padding(start = 64.dp),
+                                    text = "Notifications",
+                                    color = MaterialTheme.colors.onSurface
+                                )
+                                Spacer(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                )
+                                Switch(
+                                    checked = checkedState.value,
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = MaterialTheme.colors.primaryVariant,
+                                        uncheckedThumbColor = MaterialTheme.colors.onSurface
+                                    ),
+                                    onCheckedChange = {
+                                        viewModel.saveNotificationToSp(context, it)
+                                        checkedState.value = it
+                                    })
+                            }
+                        }
+                        if (checkedState.value) {
+
+                            Box(modifier = Modifier.padding(top = 16.dp)) {
+                                Image(
+                                    modifier = Modifier
+                                        .padding(start = 6.dp)
+                                        .align(Alignment.CenterStart),
+                                    painter = painterResource(id = R.drawable.ic_geo),
+                                    contentDescription = null,
+
+                                    )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        modifier = Modifier
+                                            .padding(start = 64.dp),
+                                        text = "Office country",
+                                        color = MaterialTheme.colors.onSurface
+                                    )
+                                    Spacer(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .weight(1f)
+                                    )
+                                    DropDownMenu()
+                                }
+                            }
+                            CreateSettingRow(
+                                "Day of notification",
+                                R.drawable.ic_calendar_date,
+                                date.value.toString()
+                            ) { datePickerDialog.show() }
+                            CreateSettingRow(
+                                "Time of notification",
+                                R.drawable.ic_notification_time,
+                                time.value.toString()
+                            ) { timePickerDialog.show() }
+
+                            Button(modifier = Modifier.padding(30.dp), onClick = {
+                                viewModel.saveNotificationDateToSp(context, date.value)
+                                viewModel.saveNotificationHourToSp(context, time.value)
+                                viewModel.getHolidays(
+                                    context,
+                                    Calendar.getInstance().get(Calendar.YEAR)
+                                )
+                                Toast.makeText(context, "Уведомления заданы!", Toast.LENGTH_SHORT)
+                                    .show()
+                            }, shape = RoundedCornerShape(20)) {
+                                Text(text = "Set notifications")
+                            }
+
+                        }
                     }
                 }
             }
         }
     }
 
+
     @Composable
     fun TopBar() {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -110,44 +215,12 @@ class SettingsFragment : Fragment() {
         }
     }
 
+
     @Composable
-    fun NotificationRow(
-    ) {
-        val context = context ?: return
-        val isChecked = viewModel.getNotificationFromSp(context)
-
-        val checkedState = remember { mutableStateOf(isChecked) }
-        Box() {
-            Image(
-                modifier = Modifier
-                    .padding(start = 6.dp)
-                    .align(Alignment.CenterStart),
-                painter = painterResource(id = R.drawable.ic_notification),
-                contentDescription = null,
-
-                )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    modifier = Modifier
-                        .padding(start = 64.dp),
-                    text = "Notifications",
-                    color = MaterialTheme.colors.onSurface
-                )
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                )
-                Switch(
-                    checked = checkedState.value,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colors.primaryVariant,
-                        uncheckedThumbColor = MaterialTheme.colors.onSurface
-                    ),
-                    onCheckedChange = {
-                        checkedState.value = it
-                    })
-            }
+    fun createPickRow(initialValue: String, action: () -> Unit) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(modifier = Modifier.padding(horizontal = 16.dp), text = initialValue)
+            Image(painter = painterResource(id = R.drawable.ic_tryangle), contentDescription = null)
         }
     }
 
@@ -155,12 +228,12 @@ class SettingsFragment : Fragment() {
     fun CreateSettingRow(
         title: String,
         iconResId: Int,
+        initialPickerValue: String,
+        pickerAction: () -> Unit
     ) {
-        val context = context ?: return
-        val isChecked = viewModel.getNotificationFromSp(context)
-
-        val checkedState = remember { mutableStateOf(isChecked) }
-        Box() {
+        Box(modifier = Modifier
+            .padding(top = 30.dp)
+            .clickable { pickerAction.invoke() }) {
             Image(
                 modifier = Modifier
                     .padding(start = 6.dp)
@@ -181,41 +254,81 @@ class SettingsFragment : Fragment() {
                         .fillMaxWidth()
                         .weight(1f)
                 )
-                Switch(
-                    checked = checkedState.value,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colors.primaryVariant,
-                        uncheckedThumbColor = MaterialTheme.colors.onSurface
-                    ),
-                    onCheckedChange = {
-                        checkedState.value = it
-                    })
+                createPickRow(initialPickerValue, pickerAction)
             }
         }
     }
 
-    fun setNotificationsForDates(context: Context, dates: List<Date>) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    private fun setNotificationsForDates(dates: List<Holiday>) {
+        val context = context ?: return
+        val day = viewModel.getNotificationDateFromSp(context)
+        val hour = viewModel.getNotificationHourFromSp(context)
+        val country = viewModel.getOfficeIdInPreferences(context, true)
+        val countryId = viewModel.getOfficeIdInPreferences(context, false) ?: "1"
 
-        // Перебираем каждую дату в списке и создаем отложенное уведомление для каждой даты
-        for (date in dates) {
-            // Создаем PendingIntent для уведомления
-            val notificationIntent = Intent(context, MyNotificationReceiver::class.java)
-            val pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
-
-            // Создаем календарь для выбранной даты и устанавливаем время уведомления
+        for (i in YearMonth.now().month.value..12) {
+            val holidays = dates.filter { it.getMonth() == i }
+            val desc = makeDescription(i, holidays)
+            val title = "${getMonthByNumber(i)} holidays report in $country"
             val calendar = Calendar.getInstance()
-            calendar.time = date
-            calendar.set(Calendar.HOUR_OF_DAY, 9) // Устанавливаем часы
-            calendar.set(Calendar.MINUTE, 0) // Устанавливаем минуты
-
-            // Устанавливаем отложенное уведомление
-            alarmManager.setExact(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                pendingIntent
-            )
+            calendar.set(Calendar.MONTH, i)
+            calendar.set(Calendar.DAY_OF_MONTH, day)
+            calendar.set(Calendar.HOUR_OF_DAY, hour)
+            calendar.set(Calendar.MINUTE, 0)
+            startAlarm(calendar, countryId.toInt(), title, desc)
         }
     }
 
+    @SuppressLint("SimpleDateFormat")
+    fun getMonthByNumber(monthnum: Int): String {
+        val c = Calendar.getInstance()
+        val month = SimpleDateFormat("MMMM")
+        c[Calendar.MONTH] = monthnum - 1
+        return month.format(c.time)
+    }
+
+
+    private fun makeDescription(month: Int, holidays: List<Holiday>): String {
+        val days = viewModel.getWorkingDaysOfMonth(YearMonth.now().year, month)
+        val title = "In next month $days working days\n"
+        val desc = if (holidays.isEmpty()) ""
+        else {
+            if (holidays.size == 1)
+                "and 1 additional holiday \n ${holidays.first().comment}"
+            else {
+                if (holidays.size == 2)
+                    "and 2 additional holidays: \n ${holidays.first().comment} \n ${holidays.last().comment}"
+                else {
+                    "and ${holidays.size} additional holidays"
+                }
+            }
+        }
+        val finalDesc = java.lang.StringBuilder().append(title).append(desc)
+        return finalDesc.toString()
+    }
+
+
+    fun startAlarm(
+        calendar: Calendar,
+        notifyId: Int,
+        titleOfNotification: String,
+        editTextDesc: String
+    ) {
+        val context = context ?: return
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, MyNotificationReceiver::class.java)
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+        intent.putExtra("Title", titleOfNotification)
+        intent.putExtra("Description", editTextDesc)
+        intent.putExtra("id", notifyId)
+
+        val pendingFlags: Int =
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        val pendingIntent = PendingIntent.getBroadcast(context, notifyId, intent, pendingFlags)
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            calendar.timeInMillis,
+            pendingIntent
+        )
+    }
 }
