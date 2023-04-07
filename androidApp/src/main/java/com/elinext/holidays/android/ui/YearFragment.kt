@@ -150,7 +150,7 @@ class YearFragment : BaseFragment() {
             ) {
                 Text(
                     modifier = Modifier
-                        .padding(16.dp)
+                        .padding(top = 16.dp, start = 16.dp)
                         .fillMaxWidth(),
                     text = "holidays",
                     color = MaterialTheme.colors.primaryVariant
@@ -234,6 +234,7 @@ class YearFragment : BaseFragment() {
             Row(
                 modifier = Modifier
                     .width(screenWidth)
+                    .padding(top = 4.dp)
             ) {
                 YearCalendarItem(list[3], screenWidth)
                 YearCalendarItem(list[4], screenWidth)
@@ -242,6 +243,7 @@ class YearFragment : BaseFragment() {
             Row(
                 modifier = Modifier
                     .width(screenWidth)
+                    .padding(top = 4.dp)
             ) {
                 YearCalendarItem(list[6], screenWidth)
                 YearCalendarItem(list[7], screenWidth)
@@ -250,6 +252,7 @@ class YearFragment : BaseFragment() {
             Row(
                 modifier = Modifier
                     .width(screenWidth)
+                    .padding(vertical = 4.dp)
             ) {
                 YearCalendarItem(list[9], screenWidth)
                 YearCalendarItem(list[10], screenWidth)
@@ -276,7 +279,7 @@ class YearFragment : BaseFragment() {
 
             }
             .clip(shape = RoundedCornerShape(4.dp))
-            .aspectRatio(1f)
+            .aspectRatio(1.1f)
             .border(
                 border = BorderStroke(
                     color = MaterialTheme.colors.background,
@@ -285,6 +288,15 @@ class YearFragment : BaseFragment() {
                 shape = RoundedCornerShape(4.dp)
             ))
         {
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 2.dp),
+                textAlign = TextAlign.Center,
+                text = calendarState.firstVisibleMonth.yearMonth.month.name,
+                fontSize = 9.sp,
+                color = MaterialTheme.colors.primaryVariant
+            )
             DaysOfWeek(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
             HorizontalCalendar(
                 state = calendarState,
@@ -301,7 +313,7 @@ class YearFragment : BaseFragment() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 4.dp)
+                .padding(top = 2.dp)
         ) {
             for (dayOfWeek in daysOfWeek) {
                 Text(
@@ -364,7 +376,7 @@ class YearFragment : BaseFragment() {
 
         Box(
             modifier = Modifier
-                .aspectRatio(1f), // This is important for square sizing!
+                .aspectRatio(1.1f), // This is important for square sizing!
             contentAlignment = Alignment.Center
         ) {
             Text(
