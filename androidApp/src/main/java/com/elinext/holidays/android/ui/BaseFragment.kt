@@ -19,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
@@ -48,6 +50,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
 
+@Suppress("IMPLICIT_CAST_TO_ANY")
 abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
 
@@ -64,7 +67,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val context = context ?: return
         viewModel.initListOfCountries()
-        viewModel.getHolidays(context,Year.now().value)
+        viewModel.getHolidays(context, Year.now().value)
         if (allYearsMap.isEmpty()) {
             viewModel.getHolidays(context, Calendar.getInstance().get(Calendar.YEAR))
         }
@@ -253,13 +256,43 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     )
                 }
             else if (holidayInfo != null) {
-                Modifier.clickable {
-                    Toast.makeText(
-                        context,
-                        holidayInfo.comment,
-                        Toast.LENGTH_SHORT
-                    ).show()
+                if (holidayInfo.holidayType == Constants.HOLIDAY) {
+                    Modifier
+                        .drawBehind {
+                            drawCircle(
+                                color = Color.Red.copy(alpha = 0.05f),
+                                radius = this.size.maxDimension
+                            )
+                        }
+                        .clickable {
+                            Toast
+                                .makeText(
+                                    context,
+                                    holidayInfo.comment,
+                                    Toast.LENGTH_SHORT
+                                )
+                                .show()
+                        }
                 }
+                else {
+                    Modifier
+                        .drawBehind {
+                            drawCircle(
+                                color = Color.Blue.copy(alpha = 0.05f),
+                                radius = this.size.maxDimension
+                            )
+                        }
+                        .clickable {
+                            Toast
+                                .makeText(
+                                    context,
+                                    holidayInfo.comment,
+                                    Toast.LENGTH_SHORT
+                                )
+                                .show()
+                        }
+                }
+
             } else Modifier
 
         val color: Color = if (isTodayDay) {
