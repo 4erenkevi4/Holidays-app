@@ -339,7 +339,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                 Text(
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
-                    text = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+                    text = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.US),
                     color = if (dayOfWeek.name == DayOfWeek.SATURDAY.name || dayOfWeek.name == DayOfWeek.SUNDAY.name) Color.Red else Color.Black
                 )
             }
@@ -388,7 +388,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     .fillMaxWidth()
             ) {
                 Text(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(top = 16.dp),
                     text = "holidays",
                     color = MaterialTheme.colors.primaryVariant
                 )

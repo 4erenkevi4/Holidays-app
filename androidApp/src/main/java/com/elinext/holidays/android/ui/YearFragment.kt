@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.bundleOf
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.elinext.holidays.android.MyApplicationTheme
 import com.elinext.holidays.android.R
@@ -265,6 +266,13 @@ class YearFragment : BaseFragment() {
 
     @Composable
     fun YearCalendarItem(calendarState: CalendarState, screenWidth: Dp) {
+        val navOptions = NavOptions.Builder()
+            .setEnterAnim(R.anim.fade_in)
+            .setExitAnim(R.anim.fade_out)
+            .setPopEnterAnim(R.anim.slide_in_left)
+            .setPopExitAnim(R.anim.slide_out_right)
+            .build()
+
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
             .width(screenWidth / 3)
             .padding(horizontal = 2.dp)
@@ -274,7 +282,11 @@ class YearFragment : BaseFragment() {
                     bundleOf(
                         Pair("year", calendarState.firstVisibleMonth.yearMonth.year),
                         Pair("month", calendarState.firstVisibleMonth.yearMonth.month.value)
-                    )
+                    ),
+                    NavOptions.Builder()
+                        .setEnterAnim(R.anim.fade_in)
+                        .setExitAnim(R.anim.fade_out)
+                        .build()
                 )
 
             }
@@ -313,13 +325,13 @@ class YearFragment : BaseFragment() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 2.dp)
+                .padding(top = 1.dp, start = 1.dp, end = 1.dp)
         ) {
             for (dayOfWeek in daysOfWeek) {
                 Text(
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
-                    text = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                    text = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.US)
                         .toString(),
                     fontSize = 9.sp,
                     maxLines = 1,
