@@ -6,6 +6,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -263,29 +264,46 @@ class YearFragment : BaseFragment() {
         }
     }
 
+    private fun getEnterAnim(calendarState: CalendarState?): Int {
+
+        return when (calendarState?.firstVisibleMonth?.yearMonth?.month?.value) {
+            1 -> R.anim.fade_out_januar
+            2 -> R.anim.fade_out_feb
+            3 -> R.anim.fade_out_mar
+            4 -> R.anim.fade_out_apr
+            5 -> R.anim.fade_out_may
+            6 -> R.anim.fade_out_jun
+            7 -> R.anim.fade_out_jul
+            8 -> R.anim.fade_out_aug
+            9 -> R.anim.fade_out_sep
+            10 -> R.anim.fade_out_oct
+            11 -> R.anim.fade_out_now
+            12 -> R.anim.fade_out_dec
+            else -> R.anim.fade_out_may
+        }
+    }
 
     @Composable
     fun YearCalendarItem(calendarState: CalendarState, screenWidth: Dp) {
-        val navOptions = NavOptions.Builder()
-            .setEnterAnim(R.anim.fade_in)
-            .setExitAnim(R.anim.fade_out)
-            .setPopEnterAnim(R.anim.slide_in_left)
-            .setPopExitAnim(R.anim.slide_out_right)
-            .build()
-
+        val interactionSource = remember { MutableInteractionSource() }
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
             .width(screenWidth / 3)
             .padding(horizontal = 2.dp)
-            .clickable {
+            .clickable(
+                indication = null,
+                interactionSource = interactionSource
+            ) {
+                val animResId = getEnterAnim(calendarState)
                 findNavController().navigate(
                     R.id.action_global_monthFragment,
                     bundleOf(
                         Pair("year", calendarState.firstVisibleMonth.yearMonth.year),
                         Pair("month", calendarState.firstVisibleMonth.yearMonth.month.value)
                     ),
-                    NavOptions.Builder()
-                        .setEnterAnim(R.anim.fade_in)
-                        .setExitAnim(R.anim.fade_out)
+                    NavOptions
+                        .Builder()
+                        .setExitAnim(animResId)
+                        .setEnterAnim(R.anim.fade_out)
                         .build()
                 )
 
@@ -365,15 +383,7 @@ class YearFragment : BaseFragment() {
                         radius = this.size.maxDimension
                     )
                 }
-            else if (holidayInfo != null) {
-                Modifier.clickable {
-                    Toast.makeText(
-                        context,
-                        holidayInfo.comment,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } else Modifier
+            else Modifier
 
         val color: Color = if (isTodayDay) {
             Color.White

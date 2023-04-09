@@ -25,7 +25,9 @@
         android:id="@+id/yearFragment"
         android:name="com.elinext.holidays.android.ui.YearFragment"
         android:label="YearFragment"
-        tools:layout="@layout/fragment_compose"/>
+        tools:layout="@layout/fragment_compose">
+
+    </fragment>
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.elinext.holidays.android.ui.SettingsFragment"
