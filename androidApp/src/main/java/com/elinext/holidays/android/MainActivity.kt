@@ -1,12 +1,14 @@
 package com.elinext.holidays.android
 
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.elinext.holidays.di.Configuration
 import com.elinext.holidays.di.EngineSDK
 import com.elinext.holidays.di.PlatformType
 
 class MainActivity : AppCompatActivity() {
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -16,6 +18,5 @@ class MainActivity : AppCompatActivity() {
             )
         )
         setContentView(R.layout.activity_main)
-
     }
 }

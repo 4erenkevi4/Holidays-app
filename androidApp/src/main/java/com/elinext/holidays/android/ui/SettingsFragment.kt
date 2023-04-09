@@ -261,43 +261,48 @@ class SettingsFragment : BaseFragment() {
 
     private fun setNotificationsForDates(dates: List<Holiday>) {
         val context = context ?: return
+        val calendar = Calendar.getInstance()
         val day = viewModel.getNotificationDateFromSp(context)
         val hour = viewModel.getNotificationHourFromSp(context)
         val country = viewModel.getOfficeIdInPreferences(context, true)
-        val countryId = viewModel.getOfficeIdInPreferences(context, false) ?: "1"
-
         for (i in YearMonth.now().month.value..12) {
             val holidays = dates.filter { it.getMonth() == i }
-            val desc = makeDescription(i, holidays)
+            val desc = makeDescription(
+                i,
+                holidays.firstOrNull()?.getYear() ?: YearMonth.now().year,
+                holidays.firstOrNull()?.getDay(),
+                holidays
+            )
             val title = "${getMonthByNumber(i)} holidays report in $country"
-            val calendar = Calendar.getInstance()
+            val notifyId = System.currentTimeMillis().toInt()
             calendar.set(Calendar.MONTH, i)
-            calendar.set(Calendar.DAY_OF_MONTH, day)
+             calendar.set(Calendar.DAY_OF_MONTH, day)
             calendar.set(Calendar.HOUR_OF_DAY, hour)
             calendar.set(Calendar.MINUTE, 0)
-            startAlarm(calendar, countryId.toInt(), title, desc)
+            startAlarm(calendar, notifyId, title, desc)
         }
     }
 
     @SuppressLint("SimpleDateFormat")
     fun getMonthByNumber(monthnum: Int): String {
-        val c = Calendar.getInstance()
-        val month = SimpleDateFormat("MMMM")
+        val c = Calendar.getInstance(Locale.ENGLISH)
+        val month = SimpleDateFormat("MMMM", Locale.ENGLISH)
         c[Calendar.MONTH] = monthnum - 1
         return month.format(c.time)
     }
 
 
-    private fun makeDescription(month: Int, holidays: List<Holiday>): String {
+    private fun makeDescription(month: Int, year: Int, day: Int?, holidays: List<Holiday>): String {
         val days = viewModel.getWorkingDaysOfMonth(YearMonth.now().year, month)
-        val title = "In next month $days working days\n"
+        val month = getMonthByNumber(month)
+        val title = "In $month $year, $days working days\n"
         val desc = if (holidays.isEmpty()) ""
         else {
             if (holidays.size == 1)
-                "and 1 additional holiday \n ${holidays.first().comment}"
+                "and 1 additional holiday: \n${holidays.first().comment}, $day $month"
             else {
                 if (holidays.size == 2)
-                    "and 2 additional holidays: \n ${holidays.first().comment} \n ${holidays.last().comment}"
+                    "and 2 additional holidays: \n ${holidays.first().comment}, $day $month \n ${holidays.last().comment}, $day $month"
                 else {
                     "and ${holidays.size} additional holidays"
                 }
@@ -320,15 +325,17 @@ class SettingsFragment : BaseFragment() {
         intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
         intent.putExtra("Title", titleOfNotification)
         intent.putExtra("Description", editTextDesc)
+        intent.putExtra("Month", calendar.get(Calendar.MONTH))
         intent.putExtra("id", notifyId)
 
         val pendingFlags: Int =
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         val pendingIntent = PendingIntent.getBroadcast(context, notifyId, intent, pendingFlags)
-        alarmManager.setExactAndAllowWhileIdle(
+        alarmManager.setAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
             calendar.timeInMillis,
             pendingIntent
         )
+
     }
 }

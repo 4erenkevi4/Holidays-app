@@ -1,7 +1,10 @@
 package com.elinext.holidays.android.ui
 
+import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
@@ -11,7 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.elinext.holidays.android.MainActivity
 import com.elinext.holidays.android.MyApplicationTheme
+import com.elinext.holidays.android.utils.Constants
 import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
@@ -21,29 +26,45 @@ import java.time.YearMonth
 
 class MonthFragment : BaseFragment() {
 
-    var restoredYear: Int? = null
+
+    private val pushNotificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val toast =
+            if (granted) "Permission granted" else "You will not receive notifications about upcoming holidays"
+        Toast.makeText(context, toast, Toast.LENGTH_SHORT)
+    }
+    private var restoredYear: Int? = null
         get() = if (field == 99) null else field
-        private set
-    var restoredMonth: Int? = null
+    private var restoredMonth: Int? = null
         get() = if (field == 99) null else field
-        private set
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        restoredYear = arguments?.getInt("year", 99)
-        restoredMonth = arguments?.getInt("month", 99)
+        if (activity?.intent?.getBooleanExtra(
+                Constants.PUSH_RESTORED,
+                false
+            ) == true
+        ) {
+            restoredMonth = activity?.intent?.getIntExtra(Constants.MONTH, 99)
+            restoredYear = activity?.intent?.getIntExtra(Constants.YEAR, 99)
+        } else {
+            restoredYear = arguments?.getInt(Constants.YEAR, 99)
+            restoredMonth = arguments?.getInt(Constants.MONTH, 99)
+        }
         super.onViewCreated(view, savedInstanceState)
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pushNotificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     @Composable
     override fun GreetingView() {
         val yearMonth = if (restoredYear != null && restoredMonth != null) YearMonth.of(
-            restoredYear!!,
-            restoredMonth!!
+            restoredYear!!, restoredMonth!!
         ) else YearMonth.now()
         MyApplicationTheme {
-            val currentMonth = remember { yearMonth}
+            val currentMonth = remember { yearMonth }
             val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
             val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
             val calendarState = rememberCalendarState(
@@ -53,13 +74,9 @@ class MonthFragment : BaseFragment() {
                 firstDayOfWeek = DayOfWeek.MONDAY
             )
             Scaffold(
-                modifier = Modifier
-                    .fillMaxSize(),
-                topBar = {
+                modifier = Modifier.fillMaxSize(), topBar = {
                     TopBar(getTitle(calendarState))
-                },
-                backgroundColor = MaterialTheme.colors.background,
-                contentColor = Color.White
+                }, backgroundColor = MaterialTheme.colors.background, contentColor = Color.White
             ) { value ->
                 val padding = value
                 Surface(
@@ -77,10 +94,7 @@ class MonthFragment : BaseFragment() {
     override fun CalendarContent(calendarState: CalendarState) {
 
         DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
-        HorizontalCalendar(
-            state = calendarState,
-            dayContent = { Day(it) }
-        )
+        HorizontalCalendar(state = calendarState, dayContent = { Day(it) })
         HolidaysView(calendarState)
     }
 }
