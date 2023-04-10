@@ -203,7 +203,7 @@ class SettingsFragment : BaseFragment() {
                 modifier = Modifier
                     .padding(16.dp)
                     .clickable {
-                        //onBackPressed
+                        activity?.onBackPressed()
                     },
                 painter = painterResource(id = R.drawable.baseline_arrow_back_24),
                 tint = Color.Gray,
