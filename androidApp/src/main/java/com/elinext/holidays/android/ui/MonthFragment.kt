@@ -84,8 +84,7 @@ class MonthFragment : BaseFragment() {
     }
 
     @Composable
-    override fun CalendarContent(calendarState: CalendarState) {
-        val allYearsState = viewModel.allHolidaysMapFlow.collectAsState(initial = null)
+    override fun CalendarContent(calendarState: CalendarState) {val allYearsState = viewModel.allHolidaysMapFlow.collectAsState(initial = null)
         DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
         if (allYearsState.value == null || allYearsMap.isEmpty()) {
             CircularProgressBar()

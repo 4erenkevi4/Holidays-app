@@ -126,7 +126,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     )
                 }
             }
-            viewModel.allHolidaysMapFlow.collect() {
+            viewModel.allHolidaysMapFlow.collect(){
                 allYearsMap = it
             }
         }

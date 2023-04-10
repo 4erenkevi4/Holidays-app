@@ -27,6 +27,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.builtins.ListSerializer
@@ -47,11 +48,7 @@ class HolidaysViewModel : ViewModel() {
     private val _listOfCountries = Channel<MutableList<String>>()
     val listOfCountries: Flow<MutableList<String>> = _listOfCountries.receiveAsFlow()
 
-    private val _allHolidaysMapLivedata = MutableLiveData<MutableMap<Int, List<Holiday>?>>()
-    val allHolidaysMapLivedata: LiveData<MutableMap<Int, List<Holiday>?>> = _allHolidaysMapLivedata
-
-    private val _allHolidaysMapFlow = Channel<MutableMap<Int, List<Holiday>?>>()
-    val allHolidaysMapFlow: Flow<MutableMap<Int, List<Holiday>?>> = _allHolidaysMapFlow.receiveAsFlow()
+    val allHolidaysMapFlow = MutableSharedFlow<MutableMap<Int, List<Holiday>?>>()
 
     private val _upcomingHolidaysLivedata = MutableLiveData<List<Holiday>>()
     val upcomingHolidaysLivedata: LiveData<List<Holiday>> = _upcomingHolidaysLivedata
@@ -165,8 +162,7 @@ class HolidaysViewModel : ViewModel() {
                         }
                     }
                 }
-                _allHolidaysMapLivedata.value = filteredMapOfHolidays.toSortedMap()
-                _allHolidaysMapFlow.send(filteredMapOfHolidays.toSortedMap())
+                allHolidaysMapFlow.emit(filteredMapOfHolidays.toSortedMap())
             }
     }
 
