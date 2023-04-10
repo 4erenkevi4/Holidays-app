@@ -20,12 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.bundleOf
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.elinext.holidays.android.MyApplicationTheme
@@ -50,12 +52,33 @@ class YearFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d("System.out", "----->${this.javaClass.name}")
+        view.findViewById<ComposeView>(R.id.compose_view).setContent {
+            GreetingView()
+        }
+    }
+
+
+
+    fun setData() {
+        val context = context ?: return
+        lifecycleScope.launch {
+            this.launch { viewModel.initListOfCountries() }
+            this.launch { viewModel.getHolidays(context, Year.now().value) }
+            if (allYearsMap.isEmpty()) {
+                this.launch {
+                    viewModel.getHolidays(
+                        context,
+                        Calendar.getInstance().get(Calendar.YEAR)
+                    )
+                }
+            }
+        }
     }
 
     @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
     override fun GreetingView() {
-        val items = allYearsMap.keys.toList()
+        val allYearsState = viewModel.allHolidaysMapFlow.collectAsState(initial = null)
         val lazyListState = rememberLazyListState()
         MyApplicationTheme {
             Scaffold(
@@ -110,35 +133,40 @@ class YearFragment : BaseFragment() {
                                 )
                             }
                         }
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .verticalScroll(rememberScrollState()),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            if (!isScrolled) {
-                                rememberCoroutineScope().launch {
-                                    lazyListState.scrollToItem(items.lastIndex)
-                                    isScrolled = true
-
-                                }
-                            }
-                            LazyRow(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                state = lazyListState,
-                                horizontalArrangement = Arrangement.spacedBy(0.dp),
-                                flingBehavior = pagedFlingBehavior(lazyListState),
+                        if (allYearsState.value == null || allYearsMap.isEmpty()) {
+                            CircularProgressBar()
+                        } else {
+                            Column(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .verticalScroll(rememberScrollState()),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                itemsIndexed(items) { index, item ->
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        val state = getState(yearValue = item, monthValue = 1)
-                                        InfoView(state)
-                                        YearScreen(state)
+                                val items = allYearsState.value!!.keys.toList()
+                                if (!isScrolled) {
+                                    rememberCoroutineScope().launch {
+                                        lazyListState.scrollToItem(items.lastIndex)
+                                        isScrolled = true
+
+                                    }
+                                }
+                                LazyRow(
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
+                                    state = lazyListState,
+                                    horizontalArrangement = Arrangement.spacedBy(0.dp),
+                                    flingBehavior = pagedFlingBehavior(lazyListState),
+                                ) {
+                                    itemsIndexed(items) { index, item ->
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth(),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            val state = getState(yearValue = item, monthValue = 1)
+                                            InfoView(state)
+                                            YearScreen(state)
+                                        }
                                     }
                                 }
                             }
@@ -187,14 +215,18 @@ class YearFragment : BaseFragment() {
         }
     }
 
+    @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
     override fun InfoView(calendarState: CalendarState?) {
         val context = context ?: return
         val oficeId = viewModel.getOfficeIdInPreferences(context, false)
-        viewModel.getQuantityWorkingDays(
-            calendarState?.firstVisibleMonth?.yearMonth?.year.toString(),
-            oficeId ?: "1"
-        )
+        lifecycleScope.launch {
+            viewModel.getQuantityWorkingDays(
+                calendarState?.firstVisibleMonth?.yearMonth?.year.toString(),
+                oficeId ?: "1"
+            )
+        }
+
         val number = viewModel.quantityWorkingDaysInYear.collectAsState(initial = "0")
         var text = "${number.value} working days"
         OutlinedTextField(

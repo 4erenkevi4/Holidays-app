@@ -50,6 +50,9 @@ class HolidaysViewModel : ViewModel() {
     private val _allHolidaysMapLivedata = MutableLiveData<MutableMap<Int, List<Holiday>?>>()
     val allHolidaysMapLivedata: LiveData<MutableMap<Int, List<Holiday>?>> = _allHolidaysMapLivedata
 
+    private val _allHolidaysMapFlow = Channel<MutableMap<Int, List<Holiday>?>>()
+    val allHolidaysMapFlow: Flow<MutableMap<Int, List<Holiday>?>> = _allHolidaysMapFlow.receiveAsFlow()
+
     private val _upcomingHolidaysLivedata = MutableLiveData<List<Holiday>>()
     val upcomingHolidaysLivedata: LiveData<List<Holiday>> = _upcomingHolidaysLivedata
 
@@ -125,8 +128,7 @@ class HolidaysViewModel : ViewModel() {
     }
 
 
-    fun initListOfCountries() {
-        viewModelScope.launch {
+   suspend fun initListOfCountries() {
             val listCountries = mutableListOf<String>()
             Log.d("ktor", "getCountries()")
             val result = EngineSDK.apiModule.holidaysRepository.getCountries()
@@ -135,20 +137,16 @@ class HolidaysViewModel : ViewModel() {
                 listCountries.add(it.name)
                 _listOfCountries.send(listCountries)
             }
-        }
     }
 
-    fun getQuantityWorkingDays(year: String, id: String) {
-        viewModelScope.launch {
+   suspend fun getQuantityWorkingDays(year: String, id: String) {
             Log.d("ktor", "get QuantityWorkingDays")
             val result = EngineSDK.apiModule.holidaysRepository.getQuantityWorkingDays(year, id)
             safeErrorProcessing(result.first)
             result.second?.let { _quantityWorkingDaysInYear.send(it.toInt()) }
-        }
     }
 
-    fun getHolidays(context: Context, year: Int? = null) {
-        viewModelScope.launch {
+   suspend fun getHolidays(context: Context, year: Int? = null) {
             Log.d("ktor", "get AllDays")
             val result = EngineSDK.apiModule.holidaysRepository.getAllDays()
             safeErrorProcessing(result.first)
@@ -168,8 +166,8 @@ class HolidaysViewModel : ViewModel() {
                     }
                 }
                 _allHolidaysMapLivedata.value = filteredMapOfHolidays.toSortedMap()
+                _allHolidaysMapFlow.send(filteredMapOfHolidays.toSortedMap())
             }
-        }
     }
 
     fun getDaysOfMonth(

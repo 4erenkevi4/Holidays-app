@@ -5,8 +5,11 @@ import androidx.appcompat.app.AppCompatActivity
 import com.elinext.holidays.di.Configuration
 import com.elinext.holidays.di.EngineSDK
 import com.elinext.holidays.di.PlatformType
+import com.elinext.holidays.models.Holiday
 
 class MainActivity : AppCompatActivity() {
+
+    var allYearsMap: MutableMap<Int, List<Holiday>?> = mutableMapOf()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {

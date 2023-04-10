@@ -44,7 +44,7 @@ class MonthFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Log.d("system.out", "----->${this.javaClass.name}")
         restoredYear = arguments?.getInt(Constants.YEAR, 99)
-            restoredMonth = arguments?.getInt(Constants.MONTH, 99)
+        restoredMonth = arguments?.getInt(Constants.MONTH, 99)
         super.onViewCreated(view, savedInstanceState)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pushNotificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
@@ -85,9 +85,13 @@ class MonthFragment : BaseFragment() {
 
     @Composable
     override fun CalendarContent(calendarState: CalendarState) {
-
+        val allYearsState = viewModel.allHolidaysMapFlow.collectAsState(initial = null)
         DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
-        HorizontalCalendar(state = calendarState, dayContent = { Day(it) })
-        HolidaysView(calendarState)
+        if (allYearsState.value == null || allYearsMap.isEmpty()) {
+            CircularProgressBar()
+        } else {
+            HorizontalCalendar(state = calendarState, dayContent = { Day(it) })
+            HolidaysView(calendarState)
+        }
     }
 }

@@ -1,3 +1,7 @@
 <resources>
     <style name="AppTheme" parent="Theme.AppCompat"/>
+
+    <style name="CustomAlertDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/rounded_shape</item>
+    </style>
 </resources>

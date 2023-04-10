@@ -40,11 +40,12 @@ class SettingsFragment : BaseFragment() {
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        viewModel.initListOfCountries()
+        lifecycleScope.launch {
+            viewModel.initListOfCountries()
+        }
         view.findViewById<ComposeView>(R.id.compose_view).setContent {
             GreetingView()
         }
-
         viewModel.upcomingHolidaysLivedata.observe(viewLifecycleOwner) {
             lifecycleScope.launch {
                 setNotificationsForDates(it)
@@ -171,10 +172,13 @@ class SettingsFragment : BaseFragment() {
                             Button(modifier = Modifier.padding(30.dp), onClick = {
                                 viewModel.saveNotificationDateToSp(context, date.value)
                                 viewModel.saveNotificationHourToSp(context, time.value)
-                                viewModel.getHolidays(
-                                    context,
-                                    Calendar.getInstance().get(Calendar.YEAR)
-                                )
+                                lifecycleScope.launch {
+                                    viewModel.getHolidays(
+                                        context,
+                                        Calendar.getInstance().get(Calendar.YEAR)
+                                    )
+                                }
+
                                 Toast.makeText(context, "Уведомления заданы!", Toast.LENGTH_SHORT)
                                     .show()
                             }, shape = RoundedCornerShape(20)) {
@@ -278,7 +282,7 @@ class SettingsFragment : BaseFragment() {
             val title = "${getMonthByNumber(i)} holidays report in $country"
             val notifyId = System.currentTimeMillis().toInt()
             calendar.set(Calendar.MONTH, i)
-             calendar.set(Calendar.DAY_OF_MONTH, day)
+            calendar.set(Calendar.DAY_OF_MONTH, day)
             calendar.set(Calendar.HOUR_OF_DAY, hour)
             calendar.set(Calendar.MINUTE, 0)
             startAlarm(calendar, notifyId, title, desc)
