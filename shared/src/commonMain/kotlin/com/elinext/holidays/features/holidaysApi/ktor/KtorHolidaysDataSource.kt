@@ -1,78 +1,97 @@
 package com.elinext.holidays.features.holidaysApi.ktor
 
 import com.elinext.holidays.features.holidaysApi.HolidaysRemoteDataSource
-import com.elinext.holidays.models.CountryModel
-import com.elinext.holidays.models.DayModel
-import com.elinext.holidays.models.Holiday
-import com.elinext.holidays.models.Holidays
+import com.elinext.holidays.models.*
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
 class KtorHolidaysDataSource(
-    private val httpClient: HttpClient,
-    val json: Json
-): HolidaysRemoteDataSource {
+    private val httpClient: HttpClient, val json: Json
+) : HolidaysRemoteDataSource {
 
-    override suspend fun getCountries(): List<CountryModel> {
-        val httpRequest = httpClient.get {
-            url {
-                path("countries/all")
+    override suspend fun getCountries(): Pair<HttpStatusCode, List<CountryModel>?> {
+        return try {
+            val httpRequest = httpClient.get {
+                url {
+                    path("countries/all")
+                }
             }
+            val result = if (httpRequest.status.isSuccess()) json.decodeFromString(
+                ListSerializer(CountryModel.serializer()), httpRequest.bodyAsText()
+            )
+            else null
+            Pair(httpRequest.call.response.status, result)
+        } catch (e: Exception) {
+            getErrorResponse(e)
         }
-
-        return json.decodeFromString(
-            ListSerializer(CountryModel.serializer()),
-            httpRequest.bodyAsText()
-        )
     }
 
-    override suspend fun getAllDays(): Holidays? {
-        val httpRequest = httpClient.get {
-            url {
-                path("days/all")
+    override suspend fun getAllDays(): Pair<HttpStatusCode, Holidays?> {
+        return try {
+            val httpRequest = httpClient.get {
+                url {
+                    path("days/all")
+                }
             }
+            val result = if (httpRequest.status.isSuccess()) json.decodeFromString(
+                Holidays.serializer(),
+                //  MapSerializer(Int.serializer(),ListSerializer(Holiday.serializer())),
+                httpRequest.bodyAsText()
+            )
+            else null
+            return Pair(httpRequest.status, result)
+
+        } catch (e: Exception) {
+            getErrorResponse(e)
         }
-        val result =
-            try {
-                json.decodeFromString(
-                    Holidays.serializer(),
-                  //  MapSerializer(Int.serializer(),ListSerializer(Holiday.serializer())),
-                    httpRequest.bodyAsText()
-                )
-            } catch (e: Exception) {
-                println(e.message)
-                null
-            }
-            return result
     }
 
-    override suspend fun searchDay(date: String, id: String): DayModel {
-        val httpRequest = httpClient.get {
-            url {
-                path("day/${date}/${id}")
+    override suspend fun searchDay(date: String, id: String): Pair<HttpStatusCode, DayModel?> {
+        return try {
+
+            val httpRequest = httpClient.get {
+                url {
+                    path("day/${date}/${id}")
+                }
             }
+            val result = if (httpRequest.status.isSuccess()) json.decodeFromString(
+                DayModel.serializer(), httpRequest.bodyAsText()
+            )
+            else null
+            Pair(httpRequest.status, result)
+        } catch (e: java.lang.Exception) {
+            getErrorResponse(e)
         }
-        return json.decodeFromString(
-            DayModel.serializer(),
-            httpRequest.bodyAsText()
-        )
     }
 
-    override suspend fun getQuantityWorkingDays(year: String, id: String): Int {
-        val httpRequest = httpClient.get {
-            url {
-                path("year/workingDays/${year}/${id}")
+    override suspend fun getQuantityWorkingDays(
+        year: String,
+        id: String
+    ): Pair<HttpStatusCode, Number?> {
+        return try {
+
+
+            val httpRequest = httpClient.get {
+                url {
+                    path("year/workingDays/${year}/${id}")
+                }
             }
+            val result = if (httpRequest.status.isSuccess()) json.decodeFromString(
+                Int.serializer(), httpRequest.bodyAsText()
+            )
+            else null
+            Pair(httpRequest.status, result)
         }
-        return json.decodeFromString(
-            Int.serializer(),
-            httpRequest.bodyAsText()
-        )
+        catch (e: Exception){
+            getErrorResponse(e)
+        }
     }
+
+    private fun getErrorResponse(e: Exception) =
+        Pair(HttpStatusCode(444, e.message ?: "internal request error"), null)
 }

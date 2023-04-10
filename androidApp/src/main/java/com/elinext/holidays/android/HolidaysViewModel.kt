@@ -11,10 +11,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.elinext.holidays.di.EngineSDK
 import com.elinext.holidays.features.holidaysApi.apiModule
-import com.elinext.holidays.models.Day
-import com.elinext.holidays.models.Holiday
-import com.elinext.holidays.models.Month
-import com.elinext.holidays.models.Year
+import com.elinext.holidays.models.*
 import com.elinext.holidays.utils.Constants.COUNTRY
 import com.elinext.holidays.utils.Constants.HOLIDAY
 import com.elinext.holidays.utils.Constants.HOLIDAYS_APP
@@ -26,15 +23,19 @@ import com.elinext.holidays.utils.Constants.OFFICE_ID
 import com.elinext.holidays.utils.Constants.WEEK_STARTS_ON_MONDAY
 import com.elinext.holidays.utils.Constants.WORKING_WEEKEND
 import com.kizitonwose.calendar.compose.CalendarState
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.builtins.ListSerializer
 import java.text.SimpleDateFormat
 import java.util.*
 
 
 class HolidaysViewModel : ViewModel() {
+
 
     private val calendar: Calendar = Calendar.getInstance()
 
@@ -51,6 +52,9 @@ class HolidaysViewModel : ViewModel() {
 
     private val _upcomingHolidaysLivedata = MutableLiveData<List<Holiday>>()
     val upcomingHolidaysLivedata: LiveData<List<Holiday>> = _upcomingHolidaysLivedata
+
+    private val _errorLivedata = MutableLiveData<ApiErrorModel>()
+    val errorLivedata: LiveData<ApiErrorModel> = _errorLivedata
 
 
     fun savePreferences(context: Context, country: String, officeId: String) {
@@ -69,7 +73,7 @@ class HolidaysViewModel : ViewModel() {
             sf.getString(OFFICE_ID, "1")
     }
 
-    fun saveNotificationToSp(context: Context, value: Boolean){
+    fun saveNotificationToSp(context: Context, value: Boolean) {
         val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
         val editor = sf.edit()
         editor.putBoolean(NOTIFICATION_SETTINGS, value)
@@ -81,7 +85,7 @@ class HolidaysViewModel : ViewModel() {
         return sf.getBoolean(NOTIFICATION_SETTINGS, false)
     }
 
-    fun saveNotificationDateToSp(context: Context, value: Int){
+    fun saveNotificationDateToSp(context: Context, value: Int) {
         val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
         val editor = sf.edit()
         editor.putInt(NOTIFICATION_DAY, value)
@@ -93,7 +97,7 @@ class HolidaysViewModel : ViewModel() {
         return sf.getInt(NOTIFICATION_DAY, 0)
     }
 
-    fun saveNotificationHourToSp(context: Context, value: Int){
+    fun saveNotificationHourToSp(context: Context, value: Int) {
         val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
         val editor = sf.edit()
         editor.putInt(NOTIFICATION_HOUR, value)
@@ -104,7 +108,6 @@ class HolidaysViewModel : ViewModel() {
         val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
         return sf.getInt(NOTIFICATION_HOUR, 0)
     }
-
 
 
     private fun getDeviceCountry(context: Context): String {
@@ -126,26 +129,30 @@ class HolidaysViewModel : ViewModel() {
         viewModelScope.launch {
             val listCountries = mutableListOf<String>()
             Log.d("ktor", "getCountries()")
-            EngineSDK.apiModule.holidaysRepository.getCountries().forEach {
+            val result = EngineSDK.apiModule.holidaysRepository.getCountries()
+            safeErrorProcessing(result.first)
+            result.second?.forEach {
                 listCountries.add(it.name)
+                _listOfCountries.send(listCountries)
             }
-            _listOfCountries.send(listCountries)
         }
     }
 
     fun getQuantityWorkingDays(year: String, id: String) {
         viewModelScope.launch {
             Log.d("ktor", "get QuantityWorkingDays")
-            EngineSDK.apiModule.holidaysRepository.getQuantityWorkingDays(year, id).let {
-                _quantityWorkingDaysInYear.send(it.toInt())
-            }
+            val result = EngineSDK.apiModule.holidaysRepository.getQuantityWorkingDays(year, id)
+            safeErrorProcessing(result.first)
+            result.second?.let { _quantityWorkingDaysInYear.send(it.toInt()) }
         }
     }
 
     fun getHolidays(context: Context, year: Int? = null) {
         viewModelScope.launch {
             Log.d("ktor", "get AllDays")
-            EngineSDK.apiModule.holidaysRepository.getAllDays()?.years?.let {
+            val result = EngineSDK.apiModule.holidaysRepository.getAllDays()
+            safeErrorProcessing(result.first)
+            result.second?.years?.let {
                 calendar.time = Date()
                 val sortedYears = it.keys.sorted()
                 sortedYears.forEach { yearInSortedYears ->
@@ -296,4 +303,19 @@ class HolidaysViewModel : ViewModel() {
         )
     }
 
+
+    /**
+     * Function for processing exceptions and sending an error signal to the error liveData.
+     * @param statusCode Exception object that caused the error
+     */
+    private fun safeErrorProcessing(statusCode: HttpStatusCode) {
+        if (statusCode.isSuccess().not()) {
+            _errorLivedata.value = (
+                    ApiErrorModel(
+                        serverErrorMessage = statusCode.description,
+                        responseErrorCode = statusCode.value
+                    )
+                    )
+        }
+    }
 }

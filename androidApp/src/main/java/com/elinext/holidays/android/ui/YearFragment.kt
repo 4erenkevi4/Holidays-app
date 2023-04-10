@@ -1,6 +1,9 @@
 package com.elinext.holidays.android.ui
 
 import android.annotation.SuppressLint
+import android.os.Bundle
+import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.FlingBehavior
@@ -43,6 +46,11 @@ import java.util.*
 class YearFragment : BaseFragment() {
 
     var isScrolled = false
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        Log.d("System.out", "----->${this.javaClass.name}")
+    }
 
     @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
@@ -302,14 +310,14 @@ class YearFragment : BaseFragment() {
                     ),
                     NavOptions
                         .Builder()
-                        .setExitAnim(animResId)
-                        .setEnterAnim(R.anim.fade_out)
+                        .setExitAnim(R.anim.fade_out)
+                        .setEnterAnim(animResId)
                         .build()
                 )
 
             }
             .clip(shape = RoundedCornerShape(4.dp))
-            .aspectRatio(1.1f)
+            .aspectRatio(1f)
             .border(
                 border = BorderStroke(
                     color = MaterialTheme.colors.background,

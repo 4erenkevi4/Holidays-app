@@ -18,7 +18,6 @@ internal val ktorModule = DI.Module(
     init = {
 
         bind<HttpEngineFactory>() with singleton { HttpEngineFactory() }
-
         bind<HttpClient>() with singleton {
 
             val engine = instance<HttpEngineFactory>().createEngine()

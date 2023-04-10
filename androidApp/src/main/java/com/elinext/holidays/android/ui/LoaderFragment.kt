@@ -2,6 +2,7 @@ package com.elinext.holidays.android.ui
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -43,7 +44,7 @@ class LoaderFragment : BaseFragment() {
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        Log.d("system.out", "----->${this.javaClass.name}")
         view.findViewById<ComposeView>(R.id.compose_view).setContent {
             GreetingView()
         }

@@ -1,7 +1,6 @@
 package com.elinext.holidays.android
 
 import android.os.Bundle
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.elinext.holidays.di.Configuration
 import com.elinext.holidays.di.EngineSDK
@@ -18,5 +17,15 @@ class MainActivity : AppCompatActivity() {
             )
         )
         setContentView(R.layout.activity_main)
+    }
+
+    override fun onBackPressed() {
+        val count = supportFragmentManager.backStackEntryCount
+        if (count == 0) {
+            super.onBackPressed()
+            //additional code
+        } else {
+            supportFragmentManager.popBackStack()
+        }
     }
 }

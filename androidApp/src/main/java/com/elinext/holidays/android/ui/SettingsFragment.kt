@@ -8,6 +8,7 @@ import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -49,6 +50,7 @@ class SettingsFragment : BaseFragment() {
                 setNotificationsForDates(it)
             }
         }
+        Log.d("system.out", "----->${this.javaClass.name}")
     }
 
     @Composable

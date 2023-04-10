@@ -53,9 +53,6 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
     fun getNotificationBuilder(title: String?, description: String?, month: Int): NotificationCompat.Builder {
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra(PUSH_RESTORED, true)
-            putExtra(MONTH, month)
-            putExtra(YEAR, YearMonth.now().year)
         }
         val pendingFlags: Int =
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE

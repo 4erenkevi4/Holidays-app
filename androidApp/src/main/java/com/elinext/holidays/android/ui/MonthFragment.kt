@@ -2,6 +2,7 @@ package com.elinext.holidays.android.ui
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,17 +42,9 @@ class MonthFragment : BaseFragment() {
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        if (activity?.intent?.getBooleanExtra(
-                Constants.PUSH_RESTORED,
-                false
-            ) == true
-        ) {
-            restoredMonth = activity?.intent?.getIntExtra(Constants.MONTH, 99)
-            restoredYear = activity?.intent?.getIntExtra(Constants.YEAR, 99)
-        } else {
-            restoredYear = arguments?.getInt(Constants.YEAR, 99)
+        Log.d("system.out", "----->${this.javaClass.name}")
+        restoredYear = arguments?.getInt(Constants.YEAR, 99)
             restoredMonth = arguments?.getInt(Constants.MONTH, 99)
-        }
         super.onViewCreated(view, savedInstanceState)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pushNotificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)

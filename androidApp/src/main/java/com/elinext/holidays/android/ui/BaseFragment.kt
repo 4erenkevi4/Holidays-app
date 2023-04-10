@@ -1,10 +1,13 @@
 package com.elinext.holidays.android.ui
 
+import androidx.appcompat.app.AlertDialog
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,12 +31,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.elinext.holidays.android.HolidaysViewModel
+import com.elinext.holidays.android.MainActivity
 import com.elinext.holidays.android.MyApplicationTheme
 import com.elinext.holidays.android.R
+import com.elinext.holidays.di.EngineSDK
+import com.elinext.holidays.features.holidaysApi.apiModule
+import com.elinext.holidays.models.ApiErrorModel
 import com.elinext.holidays.models.Day
 import com.elinext.holidays.models.Holiday
 import com.elinext.holidays.utils.Constants
@@ -56,6 +65,33 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
     val viewModel: HolidaysViewModel by viewModels()
     var allYearsMap: MutableMap<Int, List<Holiday>?> = mutableMapOf()
+    var errorDialog: AlertDialog? = null
+
+    private fun showErrorPopup(errorModel: ApiErrorModel) {
+        val context = context ?: return
+        if (errorDialog != null) return
+        val builder = AlertDialog.Builder(context)
+        errorDialog = builder.create()
+        builder.setTitle("Application encountered an error")
+        builder.setMessage(errorModel.message)
+        builder.setPositiveButton("OK") { dialog, which ->
+            dialog.dismiss()
+            errorDialog = null
+            if (errorModel.message.contains("To use the Elinext Holidays app")) {
+                (activity as MainActivity?)?.finishAffinity()
+            } else {
+                (activity as MainActivity?)?.onBackPressed()
+            }
+        }
+        errorDialog = builder.create()
+        errorDialog?.show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        errorDialog?.dismiss()
+        errorDialog = null
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -66,6 +102,9 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val context = context ?: return
+        viewModel.errorLivedata.observe(viewLifecycleOwner) {
+            showErrorPopup(it)
+        }
         viewModel.initListOfCountries()
         viewModel.getHolidays(context, Year.now().value)
         if (allYearsMap.isEmpty()) {
@@ -82,7 +121,6 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
     @Composable
     override fun CustomTabs(calendarState: CalendarState) {
-
         val id =
             if (findNavController().currentDestination?.label == MonthFragment::class.simpleName) 0 else 1
         var selectedIndex by remember { mutableStateOf(id) }
@@ -109,7 +147,9 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     onClick = {
                         selectedIndex = index
                         if (selectedIndex == 0) {
-                            findNavController().navigate(R.id.action_global_monthFragment)
+                            findNavController().navigate(
+                                R.id.action_global_monthFragment
+                            )
                         } else {
                             findNavController().navigate(R.id.action_global_yearFragment)
                         }
@@ -273,8 +313,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                                 )
                                 .show()
                         }
-                }
-                else {
+                } else {
                     Modifier
                         .drawBehind {
                             drawCircle(
@@ -388,7 +427,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     .fillMaxWidth()
             ) {
                 Text(
-                    modifier = Modifier.padding(top = 16.dp),
+                    modifier = Modifier.padding(top = 16.dp, start = 16.dp),
                     text = "holidays",
                     color = MaterialTheme.colors.primaryVariant
                 )
