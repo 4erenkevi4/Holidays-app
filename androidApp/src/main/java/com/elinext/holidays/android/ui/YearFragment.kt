@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -57,23 +58,6 @@ class YearFragment : BaseFragment() {
         }
     }
 
-
-
-    fun setData() {
-        val context = context ?: return
-        lifecycleScope.launch {
-            this.launch { viewModel.initListOfCountries() }
-            this.launch { viewModel.getHolidays(context, Year.now().value) }
-            if (allYearsMap.isEmpty()) {
-                this.launch {
-                    viewModel.getHolidays(
-                        context,
-                        Calendar.getInstance().get(Calendar.YEAR)
-                    )
-                }
-            }
-        }
-    }
 
     @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
@@ -386,11 +370,11 @@ class YearFragment : BaseFragment() {
                 .padding(top = 1.dp, start = 1.dp, end = 1.dp)
         ) {
             for (dayOfWeek in daysOfWeek) {
+                val day = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.US).first()
                 Text(
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
-                    text = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.US)
-                        .toString(),
+                    text = day.toString(),
                     fontSize = 9.sp,
                     maxLines = 1,
                     color = if (dayOfWeek.name == DayOfWeek.SATURDAY.name || dayOfWeek.name == DayOfWeek.SUNDAY.name) Color.Red else Color.Black
@@ -445,7 +429,7 @@ class YearFragment : BaseFragment() {
                 modifier = modifierForDay,
                 text = day.date.dayOfMonth.toString(),
                 color = color,
-                fontSize = 8.sp
+                fontSize = 9.sp,
             )
         }
     }
