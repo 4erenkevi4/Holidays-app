@@ -64,6 +64,7 @@ class YearFragment : BaseFragment() {
     override fun GreetingView() {
         val allYearsState = viewModel.allHolidaysMapFlow.collectAsState(initial = null)
         val lazyListState = rememberLazyListState()
+        val isYearSetted = remember { mutableStateOf(false) }
         MyApplicationTheme {
             Scaffold(
                 modifier = Modifier
@@ -126,12 +127,13 @@ class YearFragment : BaseFragment() {
                                     .verticalScroll(rememberScrollState()),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                val items = allYearsState.value!!.keys.toList()
+                                val items = allYearsState.value!!.keys.toMutableList()
+                                items[0] = items.last()
                                 if (!isScrolled) {
                                     rememberCoroutineScope().launch {
                                         lazyListState.scrollToItem(items.lastIndex)
                                         isScrolled = true
-
+                                        items.removeFirst()
                                     }
                                 }
                                 LazyRow(
@@ -147,9 +149,10 @@ class YearFragment : BaseFragment() {
                                                 .fillMaxWidth(),
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                            val state = getState(yearValue = item, monthValue = 1)
-                                            InfoView(state)
-                                            YearScreen(state)
+                                                val state =
+                                                    getState(yearValue = item, monthValue = 1)
+                                                InfoView(state)
+                                                YearScreen(state)
                                         }
                                     }
                                 }
