@@ -125,15 +125,15 @@ class HolidaysViewModel : ViewModel() {
     }
 
 
-   suspend fun initListOfCountries() {
-            val listCountries = mutableListOf<String>()
-            Log.d("ktor", "getCountries()")
-            val result = EngineSDK.apiModule.holidaysRepository.getCountries()
-            safeErrorProcessing(result.first)
-            result.second?.forEach {
-                listCountries.add(it.name)
-                _listOfCountries.send(listCountries)
-            }
+    suspend fun initListOfCountries() {
+        val listCountries = mutableListOf<String>()
+        Log.d("ktor", "getCountries()")
+        val result = EngineSDK.apiModule.holidaysRepository.getCountries()
+        safeErrorProcessing(result.first)
+        result.second?.forEach {
+            listCountries.add(it.name)
+            _listOfCountries.send(listCountries)
+        }
     }
 
    suspend fun getQuantityWorkingDays(year: String, id: String) {
@@ -143,27 +143,27 @@ class HolidaysViewModel : ViewModel() {
             result.second?.let { _quantityWorkingDaysInYear.send(it.toInt()) }
     }
 
-   suspend fun getHolidays(context: Context, year: Int? = null) {
-            Log.d("ktor", "get AllDays")
-            val result = EngineSDK.apiModule.holidaysRepository.getAllDays()
-            safeErrorProcessing(result.first)
-            result.second?.years?.let {
-                calendar.time = Date()
-                val sortedYears = it.keys.sorted()
-                sortedYears.forEach { yearInSortedYears ->
-                    val filteredHolidaysMapByOffice =
-                        it[yearInSortedYears]?.filter { holiday ->
-                            holiday.country.countryName == getOfficeIdInPreferences(context)
-                        }
-                    filteredMapOfHolidays[yearInSortedYears] = filteredHolidaysMapByOffice
-                    if (yearInSortedYears == year) {
-                        filteredHolidaysMapByOffice?.let { holidays ->
-                            _upcomingHolidaysLivedata.value = holidays
-                        }
+    suspend fun getHolidays(context: Context, year: Int? = null) {
+        Log.d("ktor", "get AllDays")
+        val result = EngineSDK.apiModule.holidaysRepository.getAllDays()
+        safeErrorProcessing(result.first)
+        result.second?.years?.let {
+            calendar.time = Date()
+            val sortedYears = it.keys.sorted()
+            sortedYears.forEach { yearInSortedYears ->
+                val filteredHolidaysMapByOffice =
+                    it[yearInSortedYears]?.filter { holiday ->
+                        holiday.country.countryName == getOfficeIdInPreferences(context)
+                    }
+                filteredMapOfHolidays[yearInSortedYears] = filteredHolidaysMapByOffice
+                if (yearInSortedYears == year) {
+                    filteredHolidaysMapByOffice?.let { holidays ->
+                        _upcomingHolidaysLivedata.value = holidays
                     }
                 }
-                allHolidaysMapFlow.emit(filteredMapOfHolidays.toSortedMap())
             }
+            allHolidaysMapFlow.emit(filteredMapOfHolidays.toSortedMap())
+        }
     }
 
     fun getDaysOfMonth(

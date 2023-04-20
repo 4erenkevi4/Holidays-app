@@ -8,13 +8,15 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Surface
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.elinext.holidays.android.MainActivity
 import com.elinext.holidays.android.MyApplicationTheme
 import com.elinext.holidays.android.utils.Constants
@@ -84,7 +86,37 @@ class MonthFragment : BaseFragment() {
     }
 
     @Composable
-    override fun CalendarContent(calendarState: CalendarState) {val allYearsState = viewModel.allHolidaysMapFlow.collectAsState(initial = null)
+    override fun InfoView(calendarState: CalendarState?) {
+        calendarState?.firstVisibleMonth?.yearMonth?.let { month ->
+            val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1)
+            var text = "$number working days (${number * 8} working hours)"
+            OutlinedTextField(
+                modifier = Modifier.padding(16.dp),
+                value = text,
+                onValueChange = { text = it },
+                readOnly = true,
+                singleLine = true,
+                shape = RoundedCornerShape(10.dp),
+                label = {
+                    Text(
+                        getTitle(calendarState = calendarState, true),
+                        color = MaterialTheme.colors.primaryVariant,
+                        fontSize = 14.sp
+                    )
+                },
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    textColor = Color.Black,
+                    unfocusedBorderColor = MaterialTheme.colors.primaryVariant,
+                    focusedBorderColor = MaterialTheme.colors.primaryVariant
+                )
+            )
+        }
+    }
+
+    @Composable
+    override fun CalendarContent(calendarState: CalendarState) {
+        val allYearsState = viewModel.allHolidaysMapFlow.collectAsState(initial = null)
+        InfoView(calendarState)
         DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
         if (allYearsState.value == null || allYearsMap.isEmpty()) {
             CircularProgressBar()

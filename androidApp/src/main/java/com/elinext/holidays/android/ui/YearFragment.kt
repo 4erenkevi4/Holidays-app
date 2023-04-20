@@ -38,6 +38,7 @@ import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.MonthDay
@@ -64,7 +65,6 @@ class YearFragment : BaseFragment() {
     override fun GreetingView() {
         val allYearsState = viewModel.allHolidaysMapFlow.collectAsState(initial = null)
         val lazyListState = rememberLazyListState()
-        val isYearSetted = remember { mutableStateOf(false) }
         MyApplicationTheme {
             Scaffold(
                 modifier = Modifier
@@ -128,12 +128,12 @@ class YearFragment : BaseFragment() {
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 val items = allYearsState.value!!.keys.toMutableList()
-                                items[0] = items.last()
+                                //items[0] = items.last()
                                 if (!isScrolled) {
                                     rememberCoroutineScope().launch {
                                         lazyListState.scrollToItem(items.lastIndex)
                                         isScrolled = true
-                                        items.removeFirst()
+                                        // items.removeFirst()
                                     }
                                 }
                                 LazyRow(
@@ -149,10 +149,10 @@ class YearFragment : BaseFragment() {
                                                 .fillMaxWidth(),
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                                val state =
-                                                    getState(yearValue = item, monthValue = 1)
-                                                InfoView(state)
-                                                YearScreen(state)
+                                            val state =
+                                                getState(yearValue = item, monthValue = 1)
+                                            InfoView(state)
+                                            YearScreen(state)
                                         }
                                     }
                                 }
@@ -207,36 +207,41 @@ class YearFragment : BaseFragment() {
     override fun InfoView(calendarState: CalendarState?) {
         val context = context ?: return
         val oficeId = viewModel.getOfficeIdInPreferences(context, false)
-        lifecycleScope.launch {
+        lifecycleScope.launch() {
             viewModel.getQuantityWorkingDays(
                 calendarState?.firstVisibleMonth?.yearMonth?.year.toString(),
                 oficeId ?: "1"
             )
         }
 
-        val number = viewModel.quantityWorkingDaysInYear.collectAsState(initial = "0")
+        val number = viewModel.quantityWorkingDaysInYear.collectAsState(initial = "")
         var text = "${number.value} working days"
-        OutlinedTextField(
-            modifier = Modifier.padding(16.dp),
-            value = text,
-            onValueChange = { text = it },
 
-            readOnly = true,
-            singleLine = true,
-            shape = RoundedCornerShape(10.dp),
-            label = {
-                Text(
-                    "${calendarState?.firstVisibleMonth?.yearMonth?.year} year info:",
-                    color = MaterialTheme.colors.primaryVariant,
-                    fontSize = 14.sp
+        if (number.value !== "") {
+            OutlinedTextField(
+                modifier = Modifier.padding(16.dp),
+                value = text,
+                onValueChange = { text = it },
+
+                readOnly = true,
+                singleLine = true,
+                shape = RoundedCornerShape(10.dp),
+                label = {
+                    Text(
+                       "${calendarState?.firstVisibleMonth?.yearMonth?.year} year info:",
+                        color = MaterialTheme.colors.primaryVariant,
+                        fontSize = 14.sp
+                    )
+                },
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    textColor = Color.Black,
+                    unfocusedBorderColor = MaterialTheme.colors.primaryVariant,
+                    focusedBorderColor = MaterialTheme.colors.primaryVariant
                 )
-            },
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                textColor = Color.Black,
-                unfocusedBorderColor = MaterialTheme.colors.primaryVariant,
-                focusedBorderColor = MaterialTheme.colors.primaryVariant
             )
-        )
+        } else {
+            CircularProgressBar(modifier = Modifier.padding(16.dp))
+        }
     }
 
 

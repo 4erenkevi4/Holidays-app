@@ -193,7 +193,6 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                InfoView(calendarState)
                 CalendarContent(calendarState)
             }
         }
@@ -414,35 +413,8 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
             }
         }
 
-
         @Composable
-        open fun InfoView(calendarState: CalendarState?) {
-            calendarState?.firstVisibleMonth?.yearMonth?.let { month ->
-                val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1)
-                var text = "$number working days (${number * 8} working hours)"
-                OutlinedTextField(
-                    modifier = Modifier.padding(16.dp),
-                    value = text,
-                    onValueChange = { text = it },
-                    readOnly = true,
-                    singleLine = true,
-                    shape = RoundedCornerShape(10.dp),
-                    label = {
-                        Text(
-                            getTitle(calendarState = calendarState, true),
-                            color = MaterialTheme.colors.primaryVariant,
-                            fontSize = 14.sp
-                        )
-                    },
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        textColor = Color.Black,
-                        unfocusedBorderColor = MaterialTheme.colors.primaryVariant,
-                        focusedBorderColor = MaterialTheme.colors.primaryVariant
-                    )
-                )
-            }
-        }
-
+        open fun InfoView(calendarState: CalendarState?) {}
 
         @Composable
         open fun HolidaysView(calendarState: CalendarState?) {
