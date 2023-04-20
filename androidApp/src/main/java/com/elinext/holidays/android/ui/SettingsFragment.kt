@@ -179,7 +179,7 @@ class SettingsFragment : BaseFragment() {
                                     )
                                 }
 
-                                Toast.makeText(context, "Уведомления заданы!", Toast.LENGTH_SHORT)
+                                Toast.makeText(context, "Notifications are set!", Toast.LENGTH_SHORT)
                                     .show()
                             }, shape = RoundedCornerShape(20)) {
                                 Text(text = "Set notifications")
