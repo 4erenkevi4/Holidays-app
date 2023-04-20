@@ -104,7 +104,7 @@ class SettingsFragment : BaseFragment() {
                                 modifier = Modifier
                                     .padding(start = 6.dp)
                                     .align(Alignment.CenterStart),
-                                painter = painterResource(id = R.drawable.ic_notification),
+                                painter = painterResource(id = R.drawable.baseline_notifications_none_24),
                                 contentDescription = null,
 
                                 )
@@ -139,7 +139,7 @@ class SettingsFragment : BaseFragment() {
                                     modifier = Modifier
                                         .padding(start = 6.dp)
                                         .align(Alignment.CenterStart),
-                                    painter = painterResource(id = R.drawable.ic_geo),
+                                    painter = painterResource(id = R.drawable.baseline_location_on_24),
                                     contentDescription = null,
 
                                     )
@@ -160,12 +160,12 @@ class SettingsFragment : BaseFragment() {
                             }
                             CreateSettingRow(
                                 "Day of notification",
-                                R.drawable.ic_calendar_date,
+                                R.drawable.baseline_calendar_month_24,
                                 date.value.toString()
                             ) { datePickerDialog.show() }
                             CreateSettingRow(
                                 "Time of notification",
-                                R.drawable.ic_notification_time,
+                                R.drawable.baseline_access_time_24,
                                 time.value.toString()
                             ) { timePickerDialog.show() }
 

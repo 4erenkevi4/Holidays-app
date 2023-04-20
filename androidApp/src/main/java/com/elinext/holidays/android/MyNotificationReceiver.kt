@@ -62,7 +62,7 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
         return NotificationCompat.Builder(applicationContext, MYCHANNEL_ID)
             .setContentTitle(title)
             .setContentText(description)
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.mipmap.ic_launcher_round)
             .setColor(Color.YELLOW)
             .setContentIntent(pendingIntent)
             .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
