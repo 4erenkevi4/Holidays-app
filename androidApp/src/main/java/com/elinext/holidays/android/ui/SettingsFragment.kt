@@ -12,6 +12,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -87,16 +88,20 @@ class SettingsFragment : BaseFragment() {
                 topBar = {
                     TopBar()
                 },
-                backgroundColor = MaterialTheme.colors.background,
+                backgroundColor = Color.White,
                 contentColor = Color.White
             ) { value ->
                 val padding = value
                 Surface(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(horizontal = 30.dp)
+                        modifier = Modifier
+                            .background(Color.White)
+                            .padding(horizontal = 16.dp)
+
                     ) {
                         // This is Notification Row
                         Box() {
@@ -179,7 +184,11 @@ class SettingsFragment : BaseFragment() {
                                     )
                                 }
 
-                                Toast.makeText(context, "Notifications are set!", Toast.LENGTH_SHORT)
+                                Toast.makeText(
+                                    context,
+                                    "Notifications are set!",
+                                    Toast.LENGTH_SHORT
+                                )
                                     .show()
                             }, shape = RoundedCornerShape(20)) {
                                 Text(text = "Set notifications")
@@ -196,7 +205,7 @@ class SettingsFragment : BaseFragment() {
     @Composable
     fun TopBar() {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().background(MaterialTheme.colors.background),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(

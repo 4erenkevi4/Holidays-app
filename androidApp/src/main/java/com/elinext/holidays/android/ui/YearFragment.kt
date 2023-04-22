@@ -124,6 +124,7 @@ class YearFragment : BaseFragment() {
                             Column(
                                 Modifier
                                     .fillMaxWidth()
+                                   .background(Color.White)
                                     .verticalScroll(rememberScrollState()),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
@@ -219,7 +220,7 @@ class YearFragment : BaseFragment() {
 
         if (number.value !== "") {
             OutlinedTextField(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(16.dp).background(Color.White),
                 value = text,
                 onValueChange = { text = it },
 
@@ -256,6 +257,7 @@ class YearFragment : BaseFragment() {
         Column(
             modifier = Modifier
                 .width(screenWidth)
+                .background(Color.White)
         ) {
             Row(
                 modifier = Modifier

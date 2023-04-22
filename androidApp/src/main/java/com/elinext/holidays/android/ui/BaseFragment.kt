@@ -182,7 +182,8 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
         }
         Column(
             Modifier
-                .fillMaxWidth()
+                .background(Color.White)
+                .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -252,7 +253,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
         val savedCountry = viewModel.getOfficeIdInPreferences(context)
 
         listCountries.value?.let { countries ->
-            Row(modifier = Modifier.clickable { expanded = !expanded }) {
+            Row(modifier = Modifier.background(MaterialTheme.colors.background).clickable { expanded = !expanded }) {
                 Text(
                     savedCountry ?: countries.first(), color = MaterialTheme.colors.onSurface
                 )
@@ -264,11 +265,14 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
             }
             Box() {
                 DropdownMenu(
+                    modifier = Modifier.background(MaterialTheme.colors.background),
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
                 ) {
                     countries.forEach { label ->
-                        DropdownMenuItem(onClick = {
+                        DropdownMenuItem(
+                            modifier = Modifier.background(MaterialTheme.colors.background),
+                            onClick = {
                             vibrate()
                             expanded = false
                             country = label
@@ -512,7 +516,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
         if (visible) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = modifier.fillMaxHeight()
+                modifier = modifier.fillMaxSize().background(Color.White)
             ) {
                 CircularProgressIndicator(
                     color = color,

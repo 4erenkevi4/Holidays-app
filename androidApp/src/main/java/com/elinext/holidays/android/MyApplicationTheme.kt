@@ -27,6 +27,7 @@ fun MyApplicationTheme(
             secondary = Color(0xFF03DAC5),
             background = Color(0xFFEBF5FD),
             onSurface = Color(0xFF636D76),
+            onBackground = Color(0xFFEBF5FD)
 
 
         )
@@ -37,6 +38,7 @@ fun MyApplicationTheme(
             secondary = Color(0xFF03DAC5),
             background = Color(0xFFEBF5FD),
             onSurface = Color(0xFF636D76),
+            onBackground = Color(0xFFEBF5FD)
 
             )
     }
