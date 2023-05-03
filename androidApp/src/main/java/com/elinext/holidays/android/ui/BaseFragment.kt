@@ -58,7 +58,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
 
-@Suppress("IMPLICIT_CAST_TO_ANY")
 abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
 
@@ -67,6 +66,8 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     var errorDialog: AlertDialog? = null
     var progressDialog: Dialog? = null
     private var toast: Toast? = null
+    var oficeId: String = "1"
+    var oficeName : String? = null
 
 
     private fun showErrorPopup(errorModel: ApiErrorModel) {
@@ -108,6 +109,8 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val context = context ?: return
+         oficeId = viewModel.getOfficeIdInPreferences(context, false)?:"1"
+        oficeName = viewModel.getOfficeIdInPreferences(context, true)
         lifecycleScope.launch {
             this.launch { viewModel.initListOfCountries() }
             this.launch { viewModel.getHolidays(context, Year.now().value) }
@@ -198,7 +201,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
         val formattedMonthName: String =
             monthName.substring(0, 1).uppercase(Locale.ROOT) + monthName.substring(1)
                 .lowercase(Locale.ROOT)
-        return if (onlyMonthName) "$formattedMonthName info: " else "$formattedMonthName, ${month.yearMonth.year}"
+        return if (onlyMonthName) "$formattedMonthName, ${month.yearMonth.year} info: " else "$formattedMonthName, ${month.yearMonth.year}"
     }
 
     @Composable
@@ -422,10 +425,6 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                 )
             }
         }
-    }
-
-    @Composable
-    open fun InfoView(calendarState: CalendarState?) {
     }
 
     @Composable

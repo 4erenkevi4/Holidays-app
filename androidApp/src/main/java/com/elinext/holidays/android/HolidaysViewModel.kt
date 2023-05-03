@@ -136,11 +136,14 @@ class HolidaysViewModel : ViewModel() {
         }
     }
 
-   suspend fun getQuantityWorkingDays(year: String, id: String) {
+   suspend fun getQuantityWorkingDays(year: String, id: String): Int {
             Log.d("ktor", "get QuantityWorkingDays")
             val result = EngineSDK.apiModule.holidaysRepository.getQuantityWorkingDays(year, id)
             safeErrorProcessing(result.first)
-            result.second?.let { _quantityWorkingDaysInYear.send(it.toInt()) }
+            result.second?.let { _quantityWorkingDaysInYear.send(it.toInt())
+            return it.toInt()
+            }
+       return 0
     }
 
     suspend fun getHolidays(context: Context, year: Int? = null) {

@@ -6,8 +6,11 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -15,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elinext.holidays.android.MainActivity
@@ -51,6 +55,7 @@ class MonthFragment : BaseFragment() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pushNotificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
         }
+
     }
 
     @Composable
@@ -86,30 +91,26 @@ class MonthFragment : BaseFragment() {
     }
 
     @Composable
-    override fun InfoView(calendarState: CalendarState?) {
+    fun InfoView(calendarState: CalendarState?) {
         calendarState?.firstVisibleMonth?.yearMonth?.let { month ->
             val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1)
-            var text = "$number working days (${number * 8} working hours)"
-            OutlinedTextField(
-                modifier = Modifier.padding(16.dp),
-                value = text,
-                onValueChange = { text = it },
-                readOnly = true,
-                singleLine = true,
-                shape = RoundedCornerShape(10.dp),
-                label = {
+            val text = "$number working days (${number * 8} working hours) \n in ${viewModel.getOfficeIdInPreferences(context = requireContext())}"
+
+            Card(
+                modifier = Modifier
+                    .padding(16.dp), shape = RoundedCornerShape(10.dp), border = BorderStroke(1.dp,MaterialTheme.colors.primaryVariant ), elevation = 10.dp
+            ) {
+                Column(modifier = Modifier
+                    .padding(horizontal = 16.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         getTitle(calendarState = calendarState, true),
                         color = MaterialTheme.colors.primaryVariant,
-                        fontSize = 14.sp
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(4.dp)
                     )
-                },
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    textColor = Color.Black,
-                    unfocusedBorderColor = MaterialTheme.colors.primaryVariant,
-                    focusedBorderColor = MaterialTheme.colors.primaryVariant
-                )
-            )
+                    Text(text = text, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 6.dp))
+                }
+            }
         }
     }
 

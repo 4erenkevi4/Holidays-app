@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
@@ -124,17 +125,16 @@ class YearFragment : BaseFragment() {
                             Column(
                                 Modifier
                                     .fillMaxWidth()
-                                   .background(Color.White)
+                                    .background(Color.White)
                                     .verticalScroll(rememberScrollState()),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 val items = allYearsState.value!!.keys.toMutableList()
-                                //items[0] = items.last()
+                                items[0] = items.last()
                                 if (!isScrolled) {
                                     rememberCoroutineScope().launch {
                                         lazyListState.scrollToItem(items.lastIndex)
                                         isScrolled = true
-                                        // items.removeFirst()
                                     }
                                 }
                                 LazyRow(
@@ -145,13 +145,13 @@ class YearFragment : BaseFragment() {
                                     flingBehavior = pagedFlingBehavior(lazyListState),
                                 ) {
                                     itemsIndexed(items) { index, item ->
+                                        val state =
+                                            getState(yearValue = item, monthValue = 1)
                                         Column(
                                             modifier = Modifier
                                                 .fillMaxWidth(),
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                            val state =
-                                                getState(yearValue = item, monthValue = 1)
                                             InfoView(state)
                                             YearScreen(state)
                                         }
@@ -205,43 +205,31 @@ class YearFragment : BaseFragment() {
 
     @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
-    override fun InfoView(calendarState: CalendarState?) {
-        val context = context ?: return
-        val oficeId = viewModel.getOfficeIdInPreferences(context, false)
+    fun InfoView(calendarState: CalendarState?) {
+        val year = calendarState?.firstVisibleMonth?.yearMonth?.year
         lifecycleScope.launch() {
             viewModel.getQuantityWorkingDays(
-                calendarState?.firstVisibleMonth?.yearMonth?.year.toString(),
-                oficeId ?: "1"
+                year.toString(),
+                oficeId.toString()
             )
         }
-
-        val number = viewModel.quantityWorkingDaysInYear.collectAsState(initial = "")
-        var text = "${number.value} working days"
-
-        if (number.value !== "") {
-            OutlinedTextField(
-                modifier = Modifier.padding(16.dp).background(Color.White),
-                value = text,
-                onValueChange = { text = it },
-
-                readOnly = true,
-                singleLine = true,
-                shape = RoundedCornerShape(10.dp),
-                label = {
-                    Text(
-                       "${calendarState?.firstVisibleMonth?.yearMonth?.year} year info:",
-                        color = MaterialTheme.colors.primaryVariant,
-                        fontSize = 14.sp
-                    )
-                },
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    textColor = Color.Black,
-                    unfocusedBorderColor = MaterialTheme.colors.primaryVariant,
-                    focusedBorderColor = MaterialTheme.colors.primaryVariant
+        val number = viewModel.quantityWorkingDaysInYear.collectAsState(initial = 260)
+        var text = "${number.value} working days in ${viewModel.getOfficeIdInPreferences(requireContext())}"
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp), shape = RoundedCornerShape(10.dp), border = BorderStroke(1.dp,MaterialTheme.colors.primaryVariant ), elevation = 10.dp
+        ) {
+            Column(modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp, vertical = 8.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "$year year info:",
+                    color = MaterialTheme.colors.primaryVariant,
+                    fontSize = 14.sp
                 )
-            )
-        } else {
-            CircularProgressBar(modifier = Modifier.padding(16.dp))
+                Text(text = text)
+            }
         }
     }
 
