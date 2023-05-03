@@ -190,7 +190,7 @@ class YearFragment : BaseFragment() {
                                         1,
                                         2,
                                         3,
-                                        it.holidayDate,
+                                        formattedData(it.holidayDate),
                                         true,
                                         it.comment
                                     )

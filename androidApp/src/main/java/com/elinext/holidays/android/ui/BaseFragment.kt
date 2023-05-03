@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -398,7 +399,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     }
 
 
-    fun formattedData(dateString: String): String? {
+    fun formattedData(dateString: String): String {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         val dateTime =
             LocalDateTime.parse(
@@ -439,9 +440,10 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     .fillMaxWidth()
             ) {
                 Text(
-                    modifier = Modifier.padding(top = 16.dp, start = 16.dp),
-                    text = "holidays",
-                    color = MaterialTheme.colors.primaryVariant
+                    modifier = if (listHolidays.isEmpty()) Modifier.padding(top = 32.dp).fillMaxWidth() else Modifier.padding(top = 16.dp, start = 16.dp),
+                    text = if (listHolidays.isEmpty()) " No additional holidays in ${month.month.name.lowercase(Locale.ROOT)}, ${month.year}" else "holidays",
+                    color = if (listHolidays.isEmpty()) Color.Gray else MaterialTheme.colors.primaryVariant,
+                    textAlign = if (listHolidays.isEmpty()) TextAlign.Center else TextAlign.Start
                 )
                 listHolidays.let { holiday ->
                     LazyColumn(Modifier.height(if (listHolidays.size > 1) 500.dp else 150.dp)) {
