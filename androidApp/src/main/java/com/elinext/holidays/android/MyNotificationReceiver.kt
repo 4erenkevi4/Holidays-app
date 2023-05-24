@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.media.RingtoneManager
 import androidx.core.app.NotificationCompat
@@ -14,6 +15,7 @@ import androidx.core.os.bundleOf
 import com.elinext.holidays.android.utils.Constants.MONTH
 import com.elinext.holidays.android.utils.Constants.PUSH_RESTORED
 import com.elinext.holidays.android.utils.Constants.YEAR
+import com.elinext.holidays.utils.Constants
 import java.time.YearMonth
 
 class MyNotificationReceiver : BroadcastReceiver() {
@@ -26,6 +28,14 @@ class MyNotificationReceiver : BroadcastReceiver() {
         val notificationUtils = NotificationUtils(context)
         val notification = notificationUtils.getNotificationBuilder(title, description, month).build()
         notificationUtils.getManager().notify(id, notification)
+        removeNotificationFromSP(context,month)
+    }
+
+    private fun removeNotificationFromSP(context: Context, month: Int) {
+        val sf: SharedPreferences = context.getSharedPreferences(Constants.HOLIDAYS_APP, 0) ?: return
+        val editor = sf.edit()
+        editor.remove(Constants.NOTIFICATION_SP_KEY +month)
+        editor.apply()
     }
 }
 
@@ -70,3 +80,10 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
             .setAutoCancel(true)
     }
 }
+
+data class Notification(
+    val country: String,
+    val description: String,
+    val month: Int,
+    val day: Int
+)

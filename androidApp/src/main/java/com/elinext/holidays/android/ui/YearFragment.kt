@@ -214,7 +214,7 @@ class YearFragment : BaseFragment() {
             )
         }
         val number = viewModel.quantityWorkingDaysInYear.collectAsState(initial = 260)
-        var text = "${number.value} working days in ${viewModel.getOfficeIdInPreferences(requireContext())}"
+        val text = "${number.value} working days in ${viewModel.getOfficeIdInPreferences(requireContext())}"
         Card(
             modifier = Modifier
                 .fillMaxWidth()

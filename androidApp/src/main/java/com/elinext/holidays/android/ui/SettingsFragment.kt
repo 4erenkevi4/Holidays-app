@@ -11,27 +11,44 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.elinext.holidays.android.MyApplicationTheme
 import com.elinext.holidays.android.MyNotificationReceiver
+import com.elinext.holidays.android.Notification
 import com.elinext.holidays.android.R
 import com.elinext.holidays.models.Holiday
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.YearMonth
@@ -39,8 +56,10 @@ import java.util.*
 
 class SettingsFragment : BaseFragment() {
 
+    private val listUpcomingNotifications = mutableListOf<Notification>()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        initUpcomingNotifications()
         lifecycleScope.launch {
             viewModel.initListOfCountries()
         }
@@ -55,11 +74,22 @@ class SettingsFragment : BaseFragment() {
         Log.d("system.out", "----->${this.javaClass.name}")
     }
 
+    private fun initUpcomingNotifications() {
+        val context = context ?: return
+        for (i in YearMonth.now().month.value..12) {
+            val notification = viewModel.getNotificationInPreferences(context = context, i)
+            notification?.let {
+                listUpcomingNotifications.add(it)
+            }
+        }
+    }
+
     @Composable
     override fun GreetingView() {
         val context = context ?: return
         val isChecked = viewModel.getNotificationFromSp(context)
         val checkedState = remember { mutableStateOf(isChecked) }
+        val setNotificationState = remember { mutableStateOf(listUpcomingNotifications.isEmpty()) }
         val time = remember { mutableStateOf(12) }
         val date = remember { mutableStateOf(22) }
         val datePickerDialog = DatePickerDialog(
@@ -174,24 +204,28 @@ class SettingsFragment : BaseFragment() {
                                 time.value.toString()
                             ) { timePickerDialog.show() }
 
-                            Button(modifier = Modifier.padding(30.dp), onClick = {
-                                viewModel.saveNotificationDateToSp(context, date.value)
-                                viewModel.saveNotificationHourToSp(context, time.value)
-                                lifecycleScope.launch {
-                                    viewModel.getHolidays(
+                            if (setNotificationState.value) {
+                                Button(modifier = Modifier.padding(30.dp), onClick = {
+                                    setNotificationState.value = true
+                                    viewModel.saveNotificationDateToSp(context, date.value)
+                                    viewModel.saveNotificationHourToSp(context, time.value)
+                                    lifecycleScope.launch {
+                                        viewModel.getHolidays(
+                                            context,
+                                            Calendar.getInstance().get(Calendar.YEAR)
+                                        )
+                                    }
+                                    Toast.makeText(
                                         context,
-                                        Calendar.getInstance().get(Calendar.YEAR)
-                                    )
+                                        "Notifications are set!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }, shape = RoundedCornerShape(20)) {
+                                    Text(text = "Set notifications")
                                 }
-
-                                Toast.makeText(
-                                    context,
-                                    "Notifications are set!",
-                                    Toast.LENGTH_SHORT
-                                )
-                                    .show()
-                            }, shape = RoundedCornerShape(20)) {
-                                Text(text = "Set notifications")
+                            }
+                            else{
+                                NotificationList()
                             }
 
                         }
@@ -200,12 +234,113 @@ class SettingsFragment : BaseFragment() {
             }
         }
     }
+    @OptIn( ExperimentalMaterialApi::class)
+    @Composable
+    fun NotificationList() {
+        val context = context?:  return
+        val dismissState = rememberDismissState()
+        val updatedList = remember { mutableStateListOf(*listUpcomingNotifications.toTypedArray()) }
+
+        SwipeRefresh(state = rememberSwipeRefreshState(false), onRefresh = { /* Handle refresh */ }) {
+            LazyColumn {
+                items(updatedList) { notification ->
+                    SwipeToDismiss(
+                        state = dismissState,
+                        directions = setOf(DismissDirection.EndToStart, DismissDirection.StartToEnd),
+                        dismissThresholds = { direction ->
+                            FixedThreshold(56.dp)
+                        },
+                        background = {
+                            val dismissDirection = dismissState.dismissDirection ?: return@SwipeToDismiss
+                            val backgroundColor = when (dismissDirection) {
+                                DismissDirection.StartToEnd -> Color.Red
+                                DismissDirection.EndToStart -> Color.Green
+                            }
+                            val icon = when (dismissDirection) {
+                                DismissDirection.StartToEnd -> Icons.Default.Delete
+                                DismissDirection.EndToStart -> Icons.Default.Done
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(backgroundColor)
+                                    .padding(horizontal = 16.dp),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Icon(
+                                    icon,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        },
+                        dismissContent = {
+                            NotificationItem(notification)
+                        })
+                    LaunchedEffect(dismissState.isDismissed(DismissDirection.EndToStart)) {
+                        if (dismissState.isDismissed(DismissDirection.EndToStart)) {
+                            updatedList.remove(notification)
+                            viewModel.removeNotificationFromSP(context,notification.month)
+                            listUpcomingNotifications.remove(notification)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+    @Composable
+    fun NotificationItem(notification: Notification) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(10.dp),
+            elevation = 4.dp,
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_notifications_none_24),
+                    contentDescription = "Notification Icon",
+                    tint = MaterialTheme.colors.primary
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = "${notification.day}.${notification.month}.${YearMonth.now().year}",
+                        style = MaterialTheme.typography.subtitle1,
+                        color = MaterialTheme.colors.primary
+                    )
+                    Text(
+                        text = notification.country,
+                        style = MaterialTheme.typography.subtitle1,
+                        color = MaterialTheme.colors.primary
+                    )
+                    Text(
+                        text = notification.description,
+                        style = MaterialTheme.typography.body1
+                    )
+                }
+            }
+        }
+    }
+
 
 
     @Composable
     fun TopBar() {
         Row(
-            modifier = Modifier.fillMaxWidth().background(MaterialTheme.colors.background),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colors.background),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -295,6 +430,7 @@ class SettingsFragment : BaseFragment() {
             calendar.set(Calendar.HOUR_OF_DAY, hour)
             calendar.set(Calendar.MINUTE, 0)
             startAlarm(calendar, notifyId, title, desc)
+            viewModel.saveNotificationToPreferences(context, country, desc, i, day)
         }
     }
 

@@ -55,7 +55,6 @@ class MonthFragment : BaseFragment() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pushNotificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
         }
-
     }
 
     @Composable

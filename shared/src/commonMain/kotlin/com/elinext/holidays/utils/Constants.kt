@@ -10,6 +10,7 @@ object Constants {
     const val NOTIFICATION_SETTINGS = "NOTIFICATION"
     const val NOTIFICATION_DAY = "NOTIFICATION_DAY"
     const val NOTIFICATION_HOUR = "NOTIFICATION_HOUR"
+    const val NOTIFICATION_SP_KEY = "NOTIFICATION_SP_KEY"
 
 
     const val BASE_URL = "http://holidays.elinext.com/api/"

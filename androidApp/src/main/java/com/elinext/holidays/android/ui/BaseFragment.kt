@@ -30,7 +30,6 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -259,7 +258,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
         listCountries.value?.let { countries ->
             Row(modifier = Modifier.background(MaterialTheme.colors.background).clickable { expanded = !expanded }) {
                 Text(
-                    savedCountry ?: countries.first(), color = MaterialTheme.colors.onSurface
+                    savedCountry ?: getCountryByLocale(countries), color = MaterialTheme.colors.onSurface
                 )
                 Icon(
                     imageVector = Icons.Filled.ArrowDropDown,
@@ -301,6 +300,16 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
             }
         }
     }
+
+    private fun getCountryByLocale(list: MutableList<String>): String {
+        val locale = Locale.getDefault()
+        val userCountry = locale.country
+        if (list.contains(userCountry)) {
+            return userCountry
+        }
+        return list.first()
+    }
+
 
     private fun vibrate() {
         val vibrator = activity?.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator

@@ -52,5 +52,9 @@ dependencies {
     implementation("androidx.fragment:fragment:1.5.5")
     implementation("androidx.navigation:navigation-fragment:2.5.3")
     implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation ("com.google.code.gson:gson:2.10.1")
+    implementation ("com.google.accompanist:accompanist-swiperefresh:0.15.0")
+
+
 
 }

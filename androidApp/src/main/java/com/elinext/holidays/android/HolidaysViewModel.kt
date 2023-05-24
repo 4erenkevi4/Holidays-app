@@ -8,29 +8,27 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.elinext.holidays.di.EngineSDK
 import com.elinext.holidays.features.holidaysApi.apiModule
 import com.elinext.holidays.models.*
-import com.elinext.holidays.utils.Constants.COUNTRY
+import com.elinext.holidays.utils.Constants
 import com.elinext.holidays.utils.Constants.HOLIDAY
 import com.elinext.holidays.utils.Constants.HOLIDAYS_APP
 import com.elinext.holidays.utils.Constants.NOTIFICATION_DAY
 import com.elinext.holidays.utils.Constants.NOTIFICATION_HOUR
 import com.elinext.holidays.utils.Constants.NOTIFICATION_SETTINGS
+import com.elinext.holidays.utils.Constants.NOTIFICATION_SP_KEY
 import com.elinext.holidays.utils.Constants.OFFICE_COUNTRY
 import com.elinext.holidays.utils.Constants.OFFICE_ID
 import com.elinext.holidays.utils.Constants.WEEK_STARTS_ON_MONDAY
 import com.elinext.holidays.utils.Constants.WORKING_WEEKEND
-import com.kizitonwose.calendar.compose.CalendarState
+import com.google.gson.Gson
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
-import kotlinx.serialization.builtins.ListSerializer
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -56,6 +54,28 @@ class HolidaysViewModel : ViewModel() {
     private val _errorLivedata = MutableLiveData<ApiErrorModel>()
     val errorLivedata: LiveData<ApiErrorModel> = _errorLivedata
 
+    fun saveNotificationToPreferences(context: Context, country: String, description: String, month: Int, day: Int) {
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0) ?: return
+        val editor = sf.edit()
+        val notification = Notification(country, description, month, day)
+        val notificationJson = Gson().toJson(notification)
+        editor.putString(NOTIFICATION_SP_KEY+month, notificationJson)
+        editor.apply()
+    }
+
+    fun getNotificationInPreferences(context: Context, month: Int): Notification? {
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
+        val notificationString = sf.getString(NOTIFICATION_SP_KEY+month, "")
+        if (notificationString.isNullOrEmpty()) return null
+        return Gson().fromJson(notificationString, Notification::class.java)
+    }
+
+     fun removeNotificationFromSP(context: Context, month: Int) {
+        val sf: SharedPreferences = context.getSharedPreferences(Constants.HOLIDAYS_APP, 0) ?: return
+        val editor = sf.edit()
+        editor.remove(Constants.NOTIFICATION_SP_KEY +month)
+        editor.apply()
+    }
 
     fun savePreferences(context: Context, country: String, officeId: String) {
         val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0) ?: return
@@ -65,12 +85,12 @@ class HolidaysViewModel : ViewModel() {
         editor.apply()
     }
 
-    fun getOfficeIdInPreferences(context: Context, ifNeedNameOffice: Boolean = true): String? {
+    fun getOfficeIdInPreferences(context: Context, ifNeedNameOffice: Boolean = true): String {
         val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
         return if (ifNeedNameOffice)
-            sf.getString(OFFICE_COUNTRY, getDeviceCountry(context))
+            sf.getString(OFFICE_COUNTRY, getDeviceCountry(context))?: "Belarus"
         else
-            sf.getString(OFFICE_ID, "1")
+            sf.getString(OFFICE_ID, "1")?:"1"
     }
 
     fun saveNotificationToSp(context: Context, value: Boolean) {
