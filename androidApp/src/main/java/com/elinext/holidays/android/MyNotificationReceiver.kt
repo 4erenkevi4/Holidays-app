@@ -85,5 +85,6 @@ data class Notification(
     val country: String,
     val description: String,
     val month: Int,
-    val day: Int
+    val day: Int,
+    val id: Int
 )

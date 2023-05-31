@@ -57,7 +57,7 @@ class HolidaysViewModel : ViewModel() {
     fun saveNotificationToPreferences(context: Context, country: String, description: String, month: Int, day: Int) {
         val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0) ?: return
         val editor = sf.edit()
-        val notification = Notification(country, description, month, day)
+        val notification = Notification(country, description, month, day, Random().nextInt())
         val notificationJson = Gson().toJson(notification)
         editor.putString(NOTIFICATION_SP_KEY+month, notificationJson)
         editor.apply()

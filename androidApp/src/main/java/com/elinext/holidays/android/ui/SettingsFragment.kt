@@ -234,61 +234,52 @@ class SettingsFragment : BaseFragment() {
             }
         }
     }
-    @OptIn( ExperimentalMaterialApi::class)
+
+
+    @OptIn(ExperimentalMaterialApi::class)
     @Composable
     fun NotificationList() {
-        val context = context?:  return
-        val dismissState = rememberDismissState()
+        val context = context?: return
         val updatedList = remember { mutableStateListOf(*listUpcomingNotifications.toTypedArray()) }
 
         SwipeRefresh(state = rememberSwipeRefreshState(false), onRefresh = { /* Handle refresh */ }) {
             LazyColumn {
-                items(updatedList) { notification ->
+                items(updatedList, key = { notification -> notification.id }) { notification ->
+                    val dismissState = rememberDismissState()
+
                     SwipeToDismiss(
                         state = dismissState,
                         directions = setOf(DismissDirection.EndToStart, DismissDirection.StartToEnd),
                         dismissThresholds = { direction ->
                             FixedThreshold(56.dp)
                         },
-                        background = {
-                            val dismissDirection = dismissState.dismissDirection ?: return@SwipeToDismiss
-                            val backgroundColor = when (dismissDirection) {
-                                DismissDirection.StartToEnd -> Color.Red
-                                DismissDirection.EndToStart -> Color.Green
-                            }
-                            val icon = when (dismissDirection) {
-                                DismissDirection.StartToEnd -> Icons.Default.Delete
-                                DismissDirection.EndToStart -> Icons.Default.Done
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(backgroundColor)
-                                    .padding(horizontal = 16.dp),
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                Icon(
-                                    icon,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        },
+                        background = { /* Background content */ },
                         dismissContent = {
                             NotificationItem(notification)
-                        })
+                        }
+                    )
+
                     LaunchedEffect(dismissState.isDismissed(DismissDirection.EndToStart)) {
                         if (dismissState.isDismissed(DismissDirection.EndToStart)) {
                             updatedList.remove(notification)
-                            viewModel.removeNotificationFromSP(context,notification.month)
+                            viewModel.removeNotificationFromSP(context, notification.month)
                             listUpcomingNotifications.remove(notification)
                         }
                     }
                 }
             }
         }
+    }
+
+
+
+
+
+    private fun <T> MutableList<T>.reorder() {
+        // Переупорядочиваем список, чтобы обновить порядок элементов
+        val newList = this.toList()
+        clear()
+        addAll(newList)
     }
 
 
