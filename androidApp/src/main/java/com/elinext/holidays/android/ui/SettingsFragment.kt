@@ -271,20 +271,6 @@ class SettingsFragment : BaseFragment() {
         }
     }
 
-
-
-
-
-    private fun <T> MutableList<T>.reorder() {
-        // Переупорядочиваем список, чтобы обновить порядок элементов
-        val newList = this.toList()
-        clear()
-        addAll(newList)
-    }
-
-
-
-
     @Composable
     fun NotificationItem(notification: Notification) {
         Card(
