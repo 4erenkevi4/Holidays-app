@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -130,11 +131,9 @@ class SettingsFragment : BaseFragment() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .background(Color.White)
-                            .padding(horizontal = 16.dp)
-
                     ) {
                         // This is Notification Row
-                        Box() {
+                        Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                             Image(
                                 modifier = Modifier
                                     .padding(start = 6.dp)
@@ -169,11 +168,11 @@ class SettingsFragment : BaseFragment() {
                         }
                         if (checkedState.value) {
 
-                            Box(modifier = Modifier.padding(top = 16.dp)) {
+                            Box(modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp)) {
                                 Image(
                                     modifier = Modifier
-                                        .padding(start = 6.dp)
-                                        .align(Alignment.CenterStart),
+                                        .align(Alignment.CenterStart)
+                                        .padding(start = 6.dp),
                                     painter = painterResource(id = R.drawable.baseline_location_on_24),
                                     contentDescription = null,
 
@@ -203,6 +202,7 @@ class SettingsFragment : BaseFragment() {
                                 R.drawable.baseline_access_time_24,
                                 time.value.toString()
                             ) { timePickerDialog.show() }
+                            Spacer(modifier = Modifier.padding(16.dp))
 
                             if (setNotificationState.value) {
                                 Button(modifier = Modifier.padding(30.dp), onClick = {
@@ -224,8 +224,19 @@ class SettingsFragment : BaseFragment() {
                                     Text(text = "Set notifications")
                                 }
                             }
-                            else{
-                                NotificationList()
+                            else {
+                                Column(horizontalAlignment = Alignment.Start, modifier = Modifier.background(
+                                    MaterialTheme.colors.background
+                                ).padding(horizontal = 16.dp)) {
+                                    Text(
+                                        text = "Upcoming push notifications:",
+                                        style = MaterialTheme.typography.subtitle1,
+                                        color = MaterialTheme.colors.primary,
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                        textAlign = TextAlign.Start
+                                    )
+                                    NotificationList()
+                                }
                             }
 
                         }
@@ -359,7 +370,7 @@ class SettingsFragment : BaseFragment() {
         pickerAction: () -> Unit
     ) {
         Box(modifier = Modifier
-            .padding(top = 30.dp)
+            .padding(top = 30.dp, start = 16.dp, end = 16.dp)
             .clickable { pickerAction.invoke() }) {
             Image(
                 modifier = Modifier
