@@ -260,11 +260,36 @@ class SettingsFragment : BaseFragment() {
 
                     SwipeToDismiss(
                         state = dismissState,
-                        directions = setOf(DismissDirection.EndToStart, DismissDirection.StartToEnd),
+                        directions = setOf(DismissDirection.EndToStart),
                         dismissThresholds = { direction ->
                             FixedThreshold(56.dp)
                         },
-                        background = { /* Background content */ },
+                        background = {
+                            val dismissDirection = dismissState.dismissDirection ?: return@SwipeToDismiss
+                            val backgroundColor = when (dismissDirection) {
+                                DismissDirection.StartToEnd -> Color.Red
+                                DismissDirection.EndToStart -> Color.Red
+                            }
+                            val icon = when (dismissDirection) {
+                                DismissDirection.StartToEnd -> Icons.Default.Delete
+                                DismissDirection.EndToStart -> Icons.Default.Delete
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(backgroundColor)
+                                    .padding(horizontal = 22.dp),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Icon(
+                                    icon,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        },
                         dismissContent = {
                             NotificationItem(notification)
                         }
@@ -287,7 +312,7 @@ class SettingsFragment : BaseFragment() {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(8.dp),
             shape = RoundedCornerShape(10.dp),
             elevation = 4.dp,
         ) {
