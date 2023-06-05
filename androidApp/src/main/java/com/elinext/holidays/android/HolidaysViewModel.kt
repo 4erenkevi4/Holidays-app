@@ -11,9 +11,9 @@ import androidx.lifecycle.ViewModel
 import com.elinext.holidays.di.EngineSDK
 import com.elinext.holidays.features.holidaysApi.apiModule
 import com.elinext.holidays.models.*
-import com.elinext.holidays.utils.Constants
 import com.elinext.holidays.utils.Constants.HOLIDAY
 import com.elinext.holidays.utils.Constants.HOLIDAYS_APP
+import com.elinext.holidays.utils.Constants.NOTIFICATIONS_COUNTRY
 import com.elinext.holidays.utils.Constants.NOTIFICATION_DAY
 import com.elinext.holidays.utils.Constants.NOTIFICATION_HOUR
 import com.elinext.holidays.utils.Constants.NOTIFICATION_SETTINGS
@@ -71,17 +71,24 @@ class HolidaysViewModel : ViewModel() {
     }
 
      fun removeNotificationFromSP(context: Context, month: Int) {
-        val sf: SharedPreferences = context.getSharedPreferences(Constants.HOLIDAYS_APP, 0) ?: return
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0) ?: return
         val editor = sf.edit()
-        editor.remove(Constants.NOTIFICATION_SP_KEY +month)
+        editor.remove(NOTIFICATION_SP_KEY +month)
         editor.apply()
     }
 
-    fun savePreferences(context: Context, country: String, officeId: String) {
+    fun saveOfficeToPreferences(context: Context, country: String, officeId: String) {
         val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0) ?: return
         val editor = sf.edit()
         editor.putString(OFFICE_COUNTRY, country)
         editor.putString(OFFICE_ID, officeId)
+        editor.apply()
+    }
+
+    fun saveNotificationOfficeToPreferences(context: Context, country: String) {
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0) ?: return
+        val editor = sf.edit()
+        editor.putString(NOTIFICATIONS_COUNTRY, country)
         editor.apply()
     }
 
@@ -91,6 +98,20 @@ class HolidaysViewModel : ViewModel() {
             sf.getString(OFFICE_COUNTRY, getDeviceCountry(context))?: "Belarus"
         else
             sf.getString(OFFICE_ID, "1")?:"1"
+    }
+
+    fun getNotificationCountry(context: Context): String? {
+        val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
+          return  sf.getString(NOTIFICATIONS_COUNTRY, getDeviceCountry(context))
+    }
+
+    fun getCountryByLocale(list: MutableList<String>): String {
+        val locale = Locale.getDefault()
+        val userCountry = locale.country
+        if (list.contains(userCountry)) {
+            return userCountry
+        }
+        return list.first()
     }
 
     fun saveNotificationToSp(context: Context, value: Boolean) {

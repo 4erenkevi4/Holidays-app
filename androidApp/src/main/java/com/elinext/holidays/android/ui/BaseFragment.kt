@@ -66,8 +66,9 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     var errorDialog: AlertDialog? = null
     var progressDialog: Dialog? = null
     private var toast: Toast? = null
+    private var listCountries = listOf<String>()
     var oficeId: String = "1"
-    var oficeName : String? = null
+    private var oficeName: String? = null
 
 
     private fun showErrorPopup(errorModel: ApiErrorModel) {
@@ -104,13 +105,12 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
         viewModel.errorLivedata.observe(viewLifecycleOwner) {
             showErrorPopup(it)
         }
+
         return inflater.inflate(R.layout.fragment_compose, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val context = context ?: return
-         oficeId = viewModel.getOfficeIdInPreferences(context, false)?:"1"
-        oficeName = viewModel.getOfficeIdInPreferences(context, true)
         lifecycleScope.launch {
             this.launch { viewModel.initListOfCountries() }
             this.launch { viewModel.getHolidays(context, Year.now().value) }
@@ -122,6 +122,17 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     )
                 }
             }
+        }
+        oficeId = viewModel.getOfficeIdInPreferences(context, false)
+        oficeName = viewModel.getOfficeIdInPreferences(context, true)
+        lifecycleScope.launch {
+
+            viewModel.listOfCountries.collect() {
+                listCountries = it
+            }
+        }
+        lifecycleScope.launch {
+
             viewModel.allHolidaysMapFlow.collect() {
                 allYearsMap = it
             }
@@ -206,6 +217,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
     @Composable
     fun TopBar(title: String?) {
+        val context = context ?: return
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -233,7 +245,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     color = MaterialTheme.colors.onSurface
                 )
             }
-            DropDownMenu()
+            DropDownMenu(viewModel.getOfficeIdInPreferences(context))
             Icon(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
@@ -248,17 +260,27 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     }
 
     @Composable
-    fun DropDownMenu() {
+    fun DropDownMenu(savedCountry: String?) {
         val context = context ?: return
-        var expanded by remember { mutableStateOf(false) }
-        val listCountries = viewModel.listOfCountries.collectAsState(initial = null)
-        var country by remember { mutableStateOf(listCountries.value?.first()) }
-        val savedCountry = viewModel.getOfficeIdInPreferences(context)
-
-        listCountries.value?.let { countries ->
-            Row(modifier = Modifier.background(MaterialTheme.colors.background).clickable { expanded = !expanded }) {
+        val list = viewModel.listOfCountries.collectAsState(initial = listCountries)
+        if (list.value.isNotEmpty()) {
+            listCountries = list.value
+            var expanded by remember { mutableStateOf(false) }
+            var country by remember {
+                mutableStateOf(
+                    savedCountry ?: getCountryByLocale(
+                        listCountries
+                    )
+                )
+            }
+            val isSettingFragmentCall = this is SettingsFragment
+            Row(
+                modifier = Modifier
+                    .background(if (isSettingFragmentCall) Color.White else MaterialTheme.colors.background)
+                    .clickable { expanded = !expanded }) {
                 Text(
-                    savedCountry ?: getCountryByLocale(countries), color = MaterialTheme.colors.onSurface
+                    country,
+                    color = MaterialTheme.colors.onSurface
                 )
                 Icon(
                     imageVector = Icons.Filled.ArrowDropDown,
@@ -272,25 +294,32 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
                 ) {
-                    countries.forEach { label ->
+                    listCountries.forEach { label ->
                         DropdownMenuItem(
                             modifier = Modifier.background(MaterialTheme.colors.background),
                             onClick = {
-                            vibrate()
-                            expanded = false
-                            country = label
-                            viewModel.savePreferences(
-                                context,
-                                country!!,
-                                countries.indexOf(country).toString()
-                            )
-                            lifecycleScope.launch {
-                                viewModel.getHolidays(
-                                    context,
-                                    Calendar.getInstance().get(Calendar.YEAR)
-                                )
-                            }
-                        }) {
+                                vibrate()
+                                expanded = false
+                                country = label
+                                if (isSettingFragmentCall) {
+                                    viewModel.saveNotificationOfficeToPreferences(
+                                        context,
+                                        country,
+                                    )
+                                } else {
+                                    viewModel.saveOfficeToPreferences(
+                                        context,
+                                        country,
+                                        listCountries.indexOf(country).toString()
+                                    )
+                                }
+                                lifecycleScope.launch {
+                                    viewModel.getHolidays(
+                                        context,
+                                        Calendar.getInstance().get(Calendar.YEAR)
+                                    )
+                                }
+                            }) {
                             Text(
                                 text = label, color = MaterialTheme.colors.onSurface
                             )
@@ -298,10 +327,15 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     }
                 }
             }
+        } else {
+            Text(
+                text = savedCountry ?: "Belarus",
+                color = MaterialTheme.colors.onSurface
+            )
         }
     }
 
-    private fun getCountryByLocale(list: MutableList<String>): String {
+    private fun getCountryByLocale(list: List<String>): String {
         val locale = Locale.getDefault()
         val userCountry = locale.country
         if (list.contains(userCountry)) {
@@ -449,8 +483,14 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                     .fillMaxWidth()
             ) {
                 Text(
-                    modifier = if (listHolidays.isEmpty()) Modifier.padding(top = 32.dp).fillMaxWidth() else Modifier.padding(top = 16.dp, start = 16.dp),
-                    text = if (listHolidays.isEmpty()) " No additional holidays in ${month.month.name.lowercase(Locale.ROOT)}, ${month.year}" else "holidays",
+                    modifier = if (listHolidays.isEmpty()) Modifier
+                        .padding(top = 32.dp)
+                        .fillMaxWidth() else Modifier.padding(top = 16.dp, start = 16.dp),
+                    text = if (listHolidays.isEmpty()) " No additional holidays in ${
+                        month.month.name.lowercase(
+                            Locale.ROOT
+                        )
+                    }, ${month.year}" else "holidays",
                     color = if (listHolidays.isEmpty()) Color.Gray else MaterialTheme.colors.primaryVariant,
                     textAlign = if (listHolidays.isEmpty()) TextAlign.Center else TextAlign.Start
                 )
@@ -526,7 +566,9 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
         if (visible) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = modifier.fillMaxSize().background(Color.White)
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(Color.White)
             ) {
                 CircularProgressIndicator(
                     color = color,

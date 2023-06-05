@@ -11,22 +11,16 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
@@ -35,11 +29,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
@@ -90,7 +82,7 @@ class SettingsFragment : BaseFragment() {
         val context = context ?: return
         val isChecked = viewModel.getNotificationFromSp(context)
         val checkedState = remember { mutableStateOf(isChecked) }
-        val setNotificationState = remember { mutableStateOf(listUpcomingNotifications.isEmpty()) }
+        val notificationLisIsEmpty = remember { mutableStateOf(listUpcomingNotifications.isEmpty()) }
         val time = remember { mutableStateOf(12) }
         val date = remember { mutableStateOf(22) }
         val datePickerDialog = DatePickerDialog(
@@ -168,7 +160,13 @@ class SettingsFragment : BaseFragment() {
                         }
                         if (checkedState.value) {
 
-                            Box(modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp)) {
+                            Box(
+                                modifier = Modifier.padding(
+                                    top = 16.dp,
+                                    start = 16.dp,
+                                    end = 16.dp
+                                )
+                            ) {
                                 Image(
                                     modifier = Modifier
                                         .align(Alignment.CenterStart)
@@ -189,7 +187,7 @@ class SettingsFragment : BaseFragment() {
                                             .fillMaxWidth()
                                             .weight(1f)
                                     )
-                                    DropDownMenu()
+                                    DropDownMenu(viewModel.getNotificationCountry(context))
                                 }
                             }
                             CreateSettingRow(
@@ -204,9 +202,9 @@ class SettingsFragment : BaseFragment() {
                             ) { timePickerDialog.show() }
                             Spacer(modifier = Modifier.padding(16.dp))
 
-                            if (setNotificationState.value) {
+                            if (notificationLisIsEmpty.value) {
                                 Button(modifier = Modifier.padding(30.dp), onClick = {
-                                    setNotificationState.value = true
+                                    notificationLisIsEmpty.value = true
                                     viewModel.saveNotificationDateToSp(context, date.value)
                                     viewModel.saveNotificationHourToSp(context, time.value)
                                     lifecycleScope.launch {
@@ -223,19 +221,25 @@ class SettingsFragment : BaseFragment() {
                                 }, shape = RoundedCornerShape(20)) {
                                     Text(text = "Set notifications")
                                 }
-                            }
-                            else {
-                                Column(horizontalAlignment = Alignment.Start, modifier = Modifier.background(
-                                    MaterialTheme.colors.background
-                                ).padding(horizontal = 16.dp)) {
+                            } else {
+                                Column(
+                                    horizontalAlignment = Alignment.Start, modifier = Modifier
+                                        .background(
+                                            MaterialTheme.colors.background
+                                        )
+                                        .padding(horizontal = 16.dp)
+                                ) {
                                     Text(
                                         text = "Upcoming push notifications:",
                                         style = MaterialTheme.typography.subtitle1,
                                         color = MaterialTheme.colors.primary,
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                        modifier = Modifier.padding(
+                                            horizontal = 16.dp,
+                                            vertical = 8.dp
+                                        ),
                                         textAlign = TextAlign.Start
                                     )
-                                    NotificationList()
+                                    NotificationList { notificationLisIsEmpty.value = true }
                                 }
                             }
 
@@ -249,11 +253,13 @@ class SettingsFragment : BaseFragment() {
 
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
-    fun NotificationList() {
-        val context = context?: return
+    fun NotificationList(onEmptyListAction: () -> Unit) {
+        val context = context ?: return
         val updatedList = remember { mutableStateListOf(*listUpcomingNotifications.toTypedArray()) }
 
-        SwipeRefresh(state = rememberSwipeRefreshState(false), onRefresh = { /* Handle refresh */ }) {
+        SwipeRefresh(
+            state = rememberSwipeRefreshState(false),
+            onRefresh = { /* Handle refresh */ }) {
             LazyColumn {
                 items(updatedList, key = { notification -> notification.id }) { notification ->
                     val dismissState = rememberDismissState()
@@ -265,7 +271,8 @@ class SettingsFragment : BaseFragment() {
                             FixedThreshold(56.dp)
                         },
                         background = {
-                            val dismissDirection = dismissState.dismissDirection ?: return@SwipeToDismiss
+                            val dismissDirection =
+                                dismissState.dismissDirection ?: return@SwipeToDismiss
                             val backgroundColor = when (dismissDirection) {
                                 DismissDirection.StartToEnd -> Color.Red
                                 DismissDirection.EndToStart -> Color.Red
@@ -300,6 +307,9 @@ class SettingsFragment : BaseFragment() {
                             updatedList.remove(notification)
                             viewModel.removeNotificationFromSP(context, notification.month)
                             listUpcomingNotifications.remove(notification)
+                            if (listUpcomingNotifications.isEmpty()){
+                                onEmptyListAction.invoke()
+                            }
                         }
                     }
                 }
@@ -345,7 +355,6 @@ class SettingsFragment : BaseFragment() {
             }
         }
     }
-
 
 
     @Composable
@@ -427,7 +436,7 @@ class SettingsFragment : BaseFragment() {
         val calendar = Calendar.getInstance()
         val day = viewModel.getNotificationDateFromSp(context)
         val hour = viewModel.getNotificationHourFromSp(context)
-        val country = viewModel.getOfficeIdInPreferences(context, true)
+        val country = viewModel.getNotificationCountry(context)?: "Belarus"
         for (i in YearMonth.now().month.value..12) {
             val holidays = dates.filter { it.getMonth() == i }
             val desc = makeDescription(
