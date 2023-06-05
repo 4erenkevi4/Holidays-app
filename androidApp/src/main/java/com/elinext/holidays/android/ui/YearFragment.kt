@@ -210,10 +210,10 @@ class YearFragment : BaseFragment() {
         lifecycleScope.launch() {
             viewModel.getQuantityWorkingDays(
                 year.toString(),
-                oficeId.toString()
+                oficeId
             )
         }
-        val number = viewModel.quantityWorkingDaysInYear.collectAsState(initial = 260)
+        val number = viewModel.quantityWorkingDaysInYear.collectAsState(initial = 251)
         val text = "${number.value} working days in ${viewModel.getOfficeIdInPreferences(requireContext())}"
         Card(
             modifier = Modifier

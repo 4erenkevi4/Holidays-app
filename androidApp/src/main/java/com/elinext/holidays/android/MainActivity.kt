@@ -3,9 +3,7 @@ package com.elinext.holidays.android
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.findNavController
 import com.elinext.holidays.di.Configuration
 import com.elinext.holidays.di.EngineSDK
 import com.elinext.holidays.di.PlatformType
@@ -16,8 +14,10 @@ import java.util.Calendar
 class MainActivity : AppCompatActivity() {
 
     var allYearsMap: MutableMap<Int, List<Holiday>?> = mutableMapOf()
-    val viewModel: HolidaysViewModel by viewModels()
-    var listUpcomingNotifications = listOf<Notification>()
+        private set
+    private val viewModel: HolidaysViewModel by viewModels()
+    var listUpcomingHolidays = listOf<Holiday>()
+        private set
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
                 platformType = PlatformType.Android("1.0", "1")
             )
         )
-        if (allYearsMap.isEmpty()){
+        if (allYearsMap.isEmpty()) {
             lifecycleScope.launch {
                 viewModel.getHolidays(
                     this@MainActivity,
@@ -39,6 +39,9 @@ class MainActivity : AppCompatActivity() {
             viewModel.allHolidaysMapFlow.collect() {
                 allYearsMap = it
             }
+        }
+        viewModel.upcomingHolidaysLivedata.observe(this) {
+            listUpcomingHolidays = it
         }
         setContentView(R.layout.activity_main)
     }

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
+import com.elinext.holidays.android.MainActivity
 import com.elinext.holidays.android.MyApplicationTheme
 import com.elinext.holidays.android.MyNotificationReceiver
 import com.elinext.holidays.android.Notification
@@ -59,11 +60,7 @@ class SettingsFragment : BaseFragment() {
         view.findViewById<ComposeView>(R.id.compose_view).setContent {
             GreetingView()
         }
-        viewModel.upcomingHolidaysLivedata.observe(viewLifecycleOwner) {
-            lifecycleScope.launch {
-                setNotificationsForDates(it)
-            }
-        }
+
         Log.d("system.out", "----->${this.javaClass.name}")
     }
 
@@ -204,7 +201,9 @@ class SettingsFragment : BaseFragment() {
 
                             if (notificationLisIsEmpty.value) {
                                 Button(modifier = Modifier.padding(30.dp), onClick = {
-                                    notificationLisIsEmpty.value = true
+                                    setNotificationsForDates((activity as MainActivity).listUpcomingHolidays)
+                                    initUpcomingNotifications()
+                                    notificationLisIsEmpty.value = false
                                     viewModel.saveNotificationDateToSp(context, date.value)
                                     viewModel.saveNotificationHourToSp(context, time.value)
                                     Toast.makeText(
