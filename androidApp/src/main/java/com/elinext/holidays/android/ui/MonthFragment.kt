@@ -93,21 +93,34 @@ class MonthFragment : BaseFragment() {
     fun InfoView(calendarState: CalendarState?) {
         calendarState?.firstVisibleMonth?.yearMonth?.let { month ->
             val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1)
-            val text = "$number working days (${number * 8} working hours) \n in ${viewModel.getOfficeIdInPreferences(context = requireContext())}"
+            val text = "$number working days (${number * 8} working hours) \n in ${
+                viewModel.getOfficeIdInPreferences(context = requireContext())
+            }"
 
             Card(
                 modifier = Modifier
-                    .padding(16.dp), shape = RoundedCornerShape(10.dp), border = BorderStroke(1.dp,MaterialTheme.colors.primaryVariant ), elevation = 10.dp
+                    .padding(16.dp),
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colors.primaryVariant),
+                elevation = 10.dp
             ) {
-                Column(modifier = Modifier
-                    .padding(horizontal = 16.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(
                         getTitle(calendarState = calendarState, true),
                         color = MaterialTheme.colors.primaryVariant,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(4.dp)
                     )
-                    Text(text = text, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 6.dp))
+                    Text(
+                        text = text,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
                 }
             }
         }
@@ -116,12 +129,15 @@ class MonthFragment : BaseFragment() {
     @Composable
     override fun CalendarContent(calendarState: CalendarState) {
         val allYearsState = viewModel.allHolidaysMapFlow.collectAsState(initial = null)
-        InfoView(calendarState)
-        DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
         if (allYearsState.value == null || allYearsMap.isEmpty()) {
             CircularProgressBar()
         } else {
-            HorizontalCalendar(state = calendarState, dayContent = { Day(it) })
+            HorizontalCalendar(state = calendarState, dayContent = { Day(it) }, monthHeader = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    InfoView(calendarState)
+                    DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
+                }
+            })
             HolidaysView(calendarState)
         }
     }
