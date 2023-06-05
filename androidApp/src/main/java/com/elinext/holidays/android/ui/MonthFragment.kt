@@ -92,7 +92,7 @@ class MonthFragment : BaseFragment() {
     @Composable
     fun InfoView(calendarState: CalendarState?) {
         calendarState?.firstVisibleMonth?.yearMonth?.let { month ->
-            val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1)
+            val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1, (activity as MainActivity).allYearsMap[month.year])
             val text = "$number working days (${number * 8} working hours) \n in ${
                 viewModel.getOfficeIdInPreferences(context = requireContext())
             }"

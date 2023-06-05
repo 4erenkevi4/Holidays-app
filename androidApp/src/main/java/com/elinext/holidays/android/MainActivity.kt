@@ -10,6 +10,7 @@ import com.elinext.holidays.di.PlatformType
 import com.elinext.holidays.models.Holiday
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.util.HashMap
 
 class MainActivity : AppCompatActivity() {
 
@@ -18,7 +19,6 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: HolidaysViewModel by viewModels()
     var listUpcomingHolidays = listOf<Holiday>()
         private set
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

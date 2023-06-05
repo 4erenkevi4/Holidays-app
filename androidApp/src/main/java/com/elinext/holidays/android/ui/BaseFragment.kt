@@ -453,7 +453,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     open fun HolidaysView(calendarState: CalendarState?) {
         calendarState?.firstVisibleMonth?.yearMonth?.let { month ->
             val listHolidays =
-                viewModel.getDaysOfMonth(year = month.year, month = month.monthValue - 1)
+                viewModel.getDaysOfMonth(year = month.year, month = month.monthValue - 1, list = (activity as MainActivity).allYearsMap[month.year])
                     .filter { it?.description.isNullOrEmpty().not() }
             Column(
                 modifier = Modifier

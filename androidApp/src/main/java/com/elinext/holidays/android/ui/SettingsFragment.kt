@@ -459,7 +459,7 @@ class SettingsFragment : BaseFragment() {
 
 
     private fun makeDescription(month: Int, year: Int, day: Int?, holidays: List<Holiday>): String {
-        val days = viewModel.getWorkingDaysOfMonth(YearMonth.now().year, month)
+        val days = viewModel.getWorkingDaysOfMonth(year, month, (activity as MainActivity).allYearsMap[year])
         val mMonth = getMonthByNumber(month)
         val title = "In $mMonth $year, $days working days\n"
         val desc = if (holidays.isEmpty()) ""

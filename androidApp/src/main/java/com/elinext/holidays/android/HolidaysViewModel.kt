@@ -48,6 +48,8 @@ class HolidaysViewModel : ViewModel() {
 
     val allHolidaysMapFlow = MutableSharedFlow<MutableMap<Int, List<Holiday>?>>()
 
+
+
     private val _upcomingHolidaysLivedata = MutableLiveData<List<Holiday>>()
     val upcomingHolidaysLivedata: LiveData<List<Holiday>> = _upcomingHolidaysLivedata
 
@@ -213,6 +215,7 @@ class HolidaysViewModel : ViewModel() {
     fun getDaysOfMonth(
         month: Int,
         year: Int,
+        list: List<Holiday>?
     ): MutableList<Day?> {
         calendar.set(year, month, calendar.getMinimum(Calendar.DATE))
         val daysOfWeek = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
@@ -225,7 +228,7 @@ class HolidaysViewModel : ViewModel() {
                     getFullDate(day, month, year),
                     holidayCheck(
                         day, month, year
-                    ), addComment(getFullDate(day, month, year), year)
+                    ), addComment(getFullDate(day, month, year), list)
                 )
             )
         }
@@ -235,6 +238,7 @@ class HolidaysViewModel : ViewModel() {
     fun getWorkingDaysOfMonth(
         year: Int,
         month: Int,
+        list: List<Holiday>?
     ): Int {
         calendar.set(year, month, calendar.getMinimum(Calendar.DATE))
         val daysOfWeek = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
@@ -247,16 +251,15 @@ class HolidaysViewModel : ViewModel() {
                     getFullDate(day, month, year),
                     holidayCheck(
                         day, month, year
-                    ), addComment(getFullDate(day, month, year), year)
+                    ), addComment(getFullDate(day, month, year),list)
                 )
             )
         }
         return listOfDays.filter { it?.isHoliday == false }.size
     }
 
-    private fun addComment(fullDate: String, year: Int): String? {
-        val isContains =
-            filteredMapOfHolidays[year]?.find { it.holidayDate.substring(0, 10) == fullDate }
+    private fun addComment(fullDate: String, list: List<Holiday>?): String? {
+        val isContains = list?.find { it.holidayDate.substring(0, 10) == fullDate }
         return isContains?.comment
     }
 
@@ -295,50 +298,6 @@ class HolidaysViewModel : ViewModel() {
             holidays.any { it.holidayDate.substring(0, 10) == fullDate }
         }
         return ifWeekend
-    }
-
-    private fun Year.getPreviousYear(): Year {
-        calendar.set(this.year, Calendar.JANUARY, 1)
-        return Year(this.year - 1, getMonthOfYear(this.year - 1))
-    }
-
-    private fun Year.getNextYear(): Year {
-        calendar.set(this.year, Calendar.JANUARY, 1)
-        return Year(this.year + 1, getMonthOfYear(this.year + 1))
-    }
-
-    private fun getMonthOfYear(
-        year: Int,
-    ): MutableList<Month> {
-        calendar.set(year, Calendar.JANUARY, 1)
-        val listOfMonth = arrayListOf<Month>()
-        for (day in Calendar.JANUARY..Calendar.DECEMBER) {
-            listOfMonth.add(Month(year, day, getDaysOfMonth(day, year)))
-        }
-        return listOfMonth
-    }
-
-    private fun Month.getPreviousMonth(): Month {
-        calendar.set(this.year, this.month, 1)
-        return getMonth(this.month - 1)
-    }
-
-    private fun Month.getNextMonth(): Month {
-        calendar.set(this.year, this.month, 1)
-        return getMonth(this.month + 1)
-    }
-
-    private fun getMonth(month: Int): Month {
-        calendar.set(Calendar.MONTH, month)
-        val calendarYear = calendar.get(Calendar.YEAR)
-        val calendarMonth = calendar.get(Calendar.MONTH)
-        return Month(
-            calendarYear, calendarMonth,
-            getDaysOfMonth(
-                calendarMonth,
-                calendarYear
-            )
-        )
     }
 
 
