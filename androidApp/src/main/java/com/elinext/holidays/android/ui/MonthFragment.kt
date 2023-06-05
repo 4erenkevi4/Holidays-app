@@ -128,8 +128,7 @@ class MonthFragment : BaseFragment() {
 
     @Composable
     override fun CalendarContent(calendarState: CalendarState) {
-        val allYearsState = viewModel.allHolidaysMapFlow.collectAsState(initial = null)
-        if (allYearsState.value == null || allYearsMap.isEmpty()) {
+        if ((activity as MainActivity).allYearsMap.isEmpty()) {
             CircularProgressBar()
         } else {
             HorizontalCalendar(state = calendarState, dayContent = { Day(it) }, monthHeader = {

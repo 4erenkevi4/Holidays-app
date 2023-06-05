@@ -207,12 +207,6 @@ class SettingsFragment : BaseFragment() {
                                     notificationLisIsEmpty.value = true
                                     viewModel.saveNotificationDateToSp(context, date.value)
                                     viewModel.saveNotificationHourToSp(context, time.value)
-                                    lifecycleScope.launch {
-                                        viewModel.getHolidays(
-                                            context,
-                                            Calendar.getInstance().get(Calendar.YEAR)
-                                        )
-                                    }
                                     Toast.makeText(
                                         context,
                                         "Notifications are set!",
