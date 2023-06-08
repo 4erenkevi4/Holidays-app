@@ -49,7 +49,6 @@ class HolidaysViewModel : ViewModel() {
     val allHolidaysMapFlow = MutableSharedFlow<MutableMap<Int, List<Holiday>?>>()
 
 
-
     private val _upcomingHolidaysLivedata = MutableLiveData<List<Holiday>>()
     val upcomingHolidaysLivedata: LiveData<List<Holiday>> = _upcomingHolidaysLivedata
 

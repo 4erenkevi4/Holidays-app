@@ -62,13 +62,15 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
 
 
     val viewModel: HolidaysViewModel by viewModels()
+    var allYearsMap: MutableMap<Int, List<Holiday>?> = mutableMapOf()
     var errorDialog: AlertDialog? = null
     var progressDialog: Dialog? = null
     private var toast: Toast? = null
     private var listCountries = listOf<String>()
     var oficeId: String = "1"
     private var oficeName: String? = null
-
+    var listUpcomingHolidays = listOf<Holiday>()
+        private set
 
     private fun showErrorPopup(errorModel: ApiErrorModel) {
         val context = context ?: return
@@ -112,6 +114,15 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
         val context = context ?: return
         lifecycleScope.launch {
             this.launch { viewModel.initListOfCountries() }
+            this.launch { viewModel.getHolidays(context, Year.now().value) }
+            if (allYearsMap.isEmpty()) {
+                this.launch {
+                    viewModel.getHolidays(
+                        context,
+                        Calendar.getInstance().get(Calendar.YEAR)
+                    )
+                }
+            }
         }
         oficeId = viewModel.getOfficeIdInPreferences(context, false)
         oficeName = viewModel.getOfficeIdInPreferences(context, true)
@@ -121,6 +132,20 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                 listCountries = it
             }
         }
+        lifecycleScope.launch {
+
+            viewModel.allHolidaysMapFlow.collect() {
+                allYearsMap = it
+            }
+        }
+
+        lifecycleScope.launch{
+            viewModel.upcomingHolidaysLivedata.observe(viewLifecycleOwner) {
+                listUpcomingHolidays = it
+            }
+        }
+
+
 
         view.findViewById<ComposeView>(R.id.compose_view).setContent {
             GreetingView()
@@ -297,6 +322,12 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                                         listCountries.indexOf(country).toString()
                                     )
                                 }
+                                lifecycleScope.launch {
+                                    viewModel.getHolidays(
+                                        context,
+                                        Calendar.getInstance().get(Calendar.YEAR)
+                                    )
+                                }
                             }) {
                             Text(
                                 text = label, color = MaterialTheme.colors.onSurface
@@ -342,7 +373,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
         val isDayShownMonth = day.position.name == DayPosition.MonthDate.name
         val isCurrentMonth = (day.date.month.name == today.month.name && isDayShownMonth)
         val isTodayDay = today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth
-        val holidayInfo = (activity as MainActivity).allYearsMap[day.date.year]?.firstOrNull {
+        val holidayInfo = allYearsMap[day.date.year]?.firstOrNull {
             formattedData(it.holidayDate) == "${day.date}"
         }
         val isHoliday =
@@ -453,7 +484,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
     open fun HolidaysView(calendarState: CalendarState?) {
         calendarState?.firstVisibleMonth?.yearMonth?.let { month ->
             val listHolidays =
-                viewModel.getDaysOfMonth(year = month.year, month = month.monthValue - 1, list = (activity as MainActivity).allYearsMap[month.year])
+                viewModel.getDaysOfMonth(year = month.year, month = month.monthValue - 1, list = allYearsMap[month.year])
                     .filter { it?.description.isNullOrEmpty().not() }
             Column(
                 modifier = Modifier

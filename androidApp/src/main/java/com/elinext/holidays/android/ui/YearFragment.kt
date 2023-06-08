@@ -32,7 +32,6 @@ import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
-import com.elinext.holidays.android.MainActivity
 import com.elinext.holidays.android.MyApplicationTheme
 import com.elinext.holidays.android.R
 import com.elinext.holidays.utils.Constants
@@ -65,6 +64,7 @@ class YearFragment : BaseFragment() {
     @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
     override fun GreetingView() {
+        val allYearsState = viewModel.allHolidaysMapFlow.collectAsState(initial = null)
         val lazyListState = rememberLazyListState()
         MyApplicationTheme {
             Scaffold(
@@ -119,7 +119,7 @@ class YearFragment : BaseFragment() {
                                 )
                             }
                         }
-                        if ((activity as MainActivity).allYearsMap.isEmpty()) {
+                        if (allYearsState.value == null || allYearsMap.isEmpty()) {
                             CircularProgressBar()
                         } else {
                             Column(
@@ -129,7 +129,7 @@ class YearFragment : BaseFragment() {
                                     .verticalScroll(rememberScrollState()),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                val items = (activity as MainActivity).allYearsMap.keys.toMutableList()
+                                val items = allYearsState.value!!.keys.toMutableList()
                                 items[0] = items.last()
                                 if (!isScrolled) {
                                     rememberCoroutineScope().launch {
@@ -168,7 +168,7 @@ class YearFragment : BaseFragment() {
 
     @Composable
     override fun HolidaysView(calendarState: CalendarState?) {
-        (activity as MainActivity).allYearsMap[calendarState?.firstVisibleMonth?.yearMonth?.year]?.let { listHolidays ->
+        allYearsMap[calendarState?.firstVisibleMonth?.yearMonth?.year]?.let { listHolidays ->
             Column(
                 modifier = Modifier
                     .background(MaterialTheme.colors.background)
@@ -390,7 +390,7 @@ class YearFragment : BaseFragment() {
         val isCurrentMonth =
             (day.date.month.name == today.month.name && isDayShownMonth) && (day.date.year == Year.now().value)
         val isTodayDay = today.dayOfMonth == day.date.dayOfMonth && isCurrentMonth
-        val holidayInfo = (activity as MainActivity).allYearsMap[day.date.year]?.firstOrNull {
+        val holidayInfo = allYearsMap[day.date.year]?.firstOrNull {
             formattedData(it.holidayDate) == "${day.date}"
         }
         val isHoliday =

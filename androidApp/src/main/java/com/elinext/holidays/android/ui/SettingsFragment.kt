@@ -208,11 +208,17 @@ class SettingsFragment : BaseFragment() {
 
                             if (notificationLisIsEmpty.value) {
                                 Button(modifier = Modifier.padding(30.dp), onClick = {
-                                    setNotificationsForDates((activity as MainActivity).listUpcomingHolidays)
+                                    setNotificationsForDates(listUpcomingHolidays)
                                     initUpcomingNotifications()
                                     notificationLisIsEmpty.value = false
                                     viewModel.saveNotificationDateToSp(context, date.value)
                                     viewModel.saveNotificationHourToSp(context, time.value)
+                                    lifecycleScope.launch {
+                                        viewModel.getHolidays(
+                                            context,
+                                            Calendar.getInstance().get(Calendar.YEAR)
+                                        )
+                                    }
                                     Toast.makeText(
                                         context,
                                         "Notifications are set!",
@@ -466,7 +472,7 @@ class SettingsFragment : BaseFragment() {
 
 
     private fun makeDescription(month: Int, year: Int, day: Int?, holidays: List<Holiday>): String {
-        val days = viewModel.getWorkingDaysOfMonth(year, month, (activity as MainActivity).allYearsMap[year])
+        val days = viewModel.getWorkingDaysOfMonth(year, month, holidays)
         val mMonth = getMonthByNumber(month)
         val title = "In $mMonth $year, $days working days\n"
         val desc = if (holidays.isEmpty()) ""

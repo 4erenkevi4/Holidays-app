@@ -92,7 +92,7 @@ class MonthFragment : BaseFragment() {
     @Composable
     fun InfoView(calendarState: CalendarState?) {
         calendarState?.firstVisibleMonth?.yearMonth?.let { month ->
-            val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1, (activity as MainActivity).allYearsMap[month.year])
+            val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1, listUpcomingHolidays)
             val text = "$number working days (${number * 8} working hours) \n in ${
                 viewModel.getOfficeIdInPreferences(context = requireContext())
             }"
@@ -128,6 +128,10 @@ class MonthFragment : BaseFragment() {
 
     @Composable
     override fun CalendarContent(calendarState: CalendarState) {
+        val allYearsState = viewModel.allHolidaysMapFlow.collectAsState(initial = null)
+        if (allYearsState.value == null) {
+            CircularProgressBar()
+        } else {
             HorizontalCalendar(state = calendarState, dayContent = { Day(it) }, monthHeader = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     InfoView(calendarState)
@@ -135,5 +139,6 @@ class MonthFragment : BaseFragment() {
                 }
             })
             HolidaysView(calendarState)
+        }
     }
 }
