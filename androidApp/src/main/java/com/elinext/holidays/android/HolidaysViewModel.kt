@@ -102,6 +102,7 @@ class HolidaysViewModel : ViewModel() {
             sf.getString(OFFICE_ID, "1")?:"1"
     }
 
+    @SuppressLint("SuspiciousIndentation")
     fun getNotificationCountry(context: Context): String? {
         val sf: SharedPreferences = context.getSharedPreferences(HOLIDAYS_APP, 0)
           return  sf.getString(NOTIFICATIONS_COUNTRY, getDeviceCountry(context))

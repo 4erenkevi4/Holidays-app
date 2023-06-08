@@ -128,9 +128,6 @@ class MonthFragment : BaseFragment() {
 
     @Composable
     override fun CalendarContent(calendarState: CalendarState) {
-        if ((activity as MainActivity).allYearsMap.isEmpty()) {
-            CircularProgressBar()
-        } else {
             HorizontalCalendar(state = calendarState, dayContent = { Day(it) }, monthHeader = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     InfoView(calendarState)
@@ -138,6 +135,5 @@ class MonthFragment : BaseFragment() {
                 }
             })
             HolidaysView(calendarState)
-        }
     }
 }

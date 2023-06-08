@@ -152,6 +152,13 @@ class SettingsFragment : BaseFragment() {
                                     onCheckedChange = {
                                         viewModel.saveNotificationToSp(context, it)
                                         checkedState.value = it
+                                        if (!it){
+                                            notificationLisIsEmpty.value = true
+                                            listUpcomingNotifications.clear()
+                                            for (i in YearMonth.now().month.value..12){
+                                                viewModel.removeNotificationFromSP(context, i)
+                                            }
+                                        }
                                     })
                             }
                         }
