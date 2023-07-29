@@ -512,6 +512,7 @@ abstract class BaseFragment : Fragment(), CalendarViewInterface {
                         }
                     }
                 }
+                Spacer(modifier = Modifier.size(40.dp))
             }
         }
     }
