@@ -92,11 +92,7 @@ class MonthFragment : BaseFragment() {
     @Composable
     fun InfoView(calendarState: CalendarState?) {
         calendarState?.firstVisibleMonth?.yearMonth?.let { month ->
-            val number = viewModel.getWorkingDaysOfMonth(
-                month.year,
-                month.month.value - 1,
-                listUpcomingHolidays
-            )
+            val number = viewModel.getWorkingDaysOfMonth(month.year, month.month.value - 1, listUpcomingHolidays)
             val text = "$number working days (${number * 8} working hours) \n in ${
                 viewModel.getOfficeIdInPreferences(context = requireContext())
             }"
@@ -141,8 +137,8 @@ class MonthFragment : BaseFragment() {
                     InfoView(calendarState)
                     DaysOfWeekTitle(daysOfWeek(firstDayOfWeek = DayOfWeek.MONDAY))
                 }
-            },
-                monthFooter = { HolidaysView(calendarState) })
+            })
+            HolidaysView(calendarState)
         }
     }
 }

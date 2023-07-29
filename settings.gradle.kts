@@ -16,4 +16,3 @@ dependencyResolutionManagement {
 rootProject.name = "Holidays"
 include(":androidApp")
 include(":shared")
-include(":iosApp")

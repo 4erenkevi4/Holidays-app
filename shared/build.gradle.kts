@@ -9,7 +9,7 @@ kotlin {
     android {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "11"
+                jvmTarget = "1.8"
             }
         }
     }
@@ -48,7 +48,7 @@ kotlin {
         }
         val androidMain by getting{
             dependencies{
-                implementation("com.google.android.material:material:1.9.0")
+                implementation("com.google.android.material:material:1.8.0")
                 api("io.ktor:ktor-client-okhttp:${ktorVersion}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutinesVersion}")
                 api("com.squareup.sqldelight:android-driver:${sqlDelightVersion}")
@@ -78,5 +78,5 @@ android {
     }
 }
 dependencies {
-    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.core:core-ktx:1.9.0")
 }
