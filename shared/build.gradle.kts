@@ -7,6 +7,15 @@ plugins {
 
 kotlin {
 
+
+    ios {
+        binaries {
+            framework {
+                baseName = "shared"
+            }
+        }
+    }
+
     android {
         compilations.all {
             kotlinOptions {
@@ -57,14 +66,14 @@ kotlin {
         }
         val androidUnitTest by getting
 
-        val iosMain by creating {
+        val iosMain by getting {
             dependsOn(commonMain)
             dependencies {
                 implementation("io.ktor:ktor-client-ios:${ktorVersion}")
                 implementation("com.squareup.sqldelight:native-driver:${sqlDelightVersion}")
             }
         }
-        val iosTest by creating {
+        val iosTest by getting {
             dependsOn(commonTest)
         }
     }
