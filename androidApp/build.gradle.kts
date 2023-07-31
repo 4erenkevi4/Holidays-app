@@ -30,11 +30,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
 }
 
@@ -48,9 +48,9 @@ dependencies {
     implementation("androidx.compose.material:material:1.3.1")
     implementation("androidx.activity:activity-compose:1.6.1")
     implementation("com.kizitonwose.calendar:compose:2.1.1")
-    implementation("androidx.core:core-ktx:1.9.0")
-    implementation("androidx.fragment:fragment:1.5.5")
-    implementation("androidx.navigation:navigation-fragment:2.5.3")
+    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.fragment:fragment:1.6.1")
+    implementation("androidx.navigation:navigation-fragment:2.6.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation ("com.google.code.gson:gson:2.10.1")
     implementation ("com.google.accompanist:accompanist-swiperefresh:0.15.0")
