@@ -1,10 +1,9 @@
 package com.elinext.holidays.features.holidaysApi
 
-import com.elinext.holidays.models.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import kotlinx.coroutines.flow.MutableSharedFlow
-import okhttp3.Response
+import com.elinext.holidays.models.CountryModel
+import com.elinext.holidays.models.DayModel
+import com.elinext.holidays.models.Holidays
+import io.ktor.http.HttpStatusCode
 
 interface HolidaysRemoteDataSource {
     suspend fun getCountries(): Pair<HttpStatusCode,List<CountryModel>?>

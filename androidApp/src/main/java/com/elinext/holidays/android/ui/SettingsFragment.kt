@@ -35,7 +35,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
-import com.elinext.holidays.android.MainActivity
 import com.elinext.holidays.android.MyApplicationTheme
 import com.elinext.holidays.android.MyNotificationReceiver
 import com.elinext.holidays.android.Notification
@@ -45,7 +44,9 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.time.OffsetDateTime
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 class SettingsFragment : BaseFragment() {
@@ -79,7 +80,8 @@ class SettingsFragment : BaseFragment() {
         val context = context ?: return
         val isChecked = viewModel.getNotificationFromSp(context)
         val checkedState = remember { mutableStateOf(isChecked) }
-        val notificationLisIsEmpty = remember { mutableStateOf(listUpcomingNotifications.isEmpty()) }
+        val notificationLisIsEmpty =
+            remember { mutableStateOf(listUpcomingNotifications.isEmpty()) }
         val time = remember { mutableStateOf(12) }
         val date = remember { mutableStateOf(22) }
         val datePickerDialog = DatePickerDialog(
@@ -152,10 +154,10 @@ class SettingsFragment : BaseFragment() {
                                     onCheckedChange = {
                                         viewModel.saveNotificationToSp(context, it)
                                         checkedState.value = it
-                                        if (!it){
+                                        if (!it) {
                                             notificationLisIsEmpty.value = true
                                             listUpcomingNotifications.clear()
-                                            for (i in YearMonth.now().month.value..12){
+                                            for (i in YearMonth.now().month.value..12) {
                                                 viewModel.removeNotificationFromSP(context, i)
                                             }
                                         }
@@ -313,7 +315,7 @@ class SettingsFragment : BaseFragment() {
                             updatedList.remove(notification)
                             viewModel.removeNotificationFromSP(context, notification.month)
                             listUpcomingNotifications.remove(notification)
-                            if (listUpcomingNotifications.isEmpty()){
+                            if (listUpcomingNotifications.isEmpty()) {
                                 onEmptyListAction.invoke()
                             }
                         }
@@ -442,13 +444,13 @@ class SettingsFragment : BaseFragment() {
         val calendar = Calendar.getInstance()
         val day = viewModel.getNotificationDateFromSp(context)
         val hour = viewModel.getNotificationHourFromSp(context)
-        val country = viewModel.getNotificationCountry(context)?: "Belarus"
+        val country = viewModel.getNotificationCountry(context) ?: "Belarus"
         for (i in YearMonth.now().month.value..12) {
-            val holidays = dates.filter { it.getMonth() == i }
+            val holidays = dates.filter { getMonth(it) == i }
             val desc = makeDescription(
                 i,
                 holidays.firstOrNull()?.getYear() ?: YearMonth.now().year,
-                holidays.firstOrNull()?.getDay(),
+                holidays.firstOrNull()?.getDay() ?: 1,
                 holidays
             )
             val title = "${getMonthByNumber(i)} holidays report in $country"
@@ -516,5 +518,27 @@ class SettingsFragment : BaseFragment() {
             pendingIntent
         )
 
+    }
+
+
+    private fun getMonth(holiday: Holiday): Int {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+        val dateTime: OffsetDateTime = OffsetDateTime.parse(holiday.holidayDate, formatter)
+        return dateTime.monthValue
+    }
+
+
+    private fun Holiday?.getDay(): Int? {
+        if (this == null) return null
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+        val dateTime: OffsetDateTime = OffsetDateTime.parse(this.holidayDate, formatter)
+        return dateTime.dayOfMonth
+    }
+
+    private fun Holiday?.getYear(): Int? {
+        if (this == null) return null
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+        val dateTime: OffsetDateTime = OffsetDateTime.parse(this.holidayDate, formatter)
+        return dateTime.year
     }
 }

@@ -64,7 +64,7 @@ class KtorHolidaysDataSource(
             )
             else null
             Pair(httpRequest.status, result)
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             getErrorResponse(e)
         }
     }

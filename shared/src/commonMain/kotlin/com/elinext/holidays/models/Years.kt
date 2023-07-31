@@ -2,8 +2,7 @@ package com.elinext.holidays.models
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
-import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
+
 
 @Serializable
 data class Holidays(
@@ -22,22 +21,4 @@ data class Holiday(
     @SerialName("exclusionDate") var holidayDate: String,
     @SerialName("type") var holidayType: String,
     @SerialName("country") var country: Country,
-){
-    fun getDay(): Int {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
-        val dateTime: OffsetDateTime = OffsetDateTime.parse(holidayDate, formatter)
-        return dateTime.dayOfMonth
-    }
-
-    fun getMonth(): Int {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
-        val dateTime: OffsetDateTime = OffsetDateTime.parse(holidayDate, formatter)
-        return dateTime.monthValue
-    }
-
-    fun getYear(): Int {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
-        val dateTime: OffsetDateTime = OffsetDateTime.parse(holidayDate, formatter)
-        return dateTime.year
-    }
-}
+)

@@ -20,7 +20,6 @@ import com.elinext.holidays.utils.Constants.NOTIFICATION_SETTINGS
 import com.elinext.holidays.utils.Constants.NOTIFICATION_SP_KEY
 import com.elinext.holidays.utils.Constants.OFFICE_COUNTRY
 import com.elinext.holidays.utils.Constants.OFFICE_ID
-import com.elinext.holidays.utils.Constants.WEEK_STARTS_ON_MONDAY
 import com.elinext.holidays.utils.Constants.WORKING_WEEKEND
 import com.google.gson.Gson
 import io.ktor.client.statement.*
@@ -35,6 +34,17 @@ import java.util.*
 
 class HolidaysViewModel : ViewModel() {
 
+    companion object{
+        val WEEK_STARTS_ON_MONDAY = listOf(
+            Calendar.MONDAY,
+            Calendar.TUESDAY,
+            Calendar.WEDNESDAY,
+            Calendar.THURSDAY,
+            Calendar.FRIDAY,
+            Calendar.SATURDAY,
+            Calendar.SUNDAY
+        )
+    }
 
     private val calendar: Calendar = Calendar.getInstance()
 
