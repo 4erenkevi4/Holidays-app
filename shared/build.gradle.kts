@@ -7,14 +7,16 @@ plugins {
 
 kotlin {
 
-
-    ios {
-        binaries {
-            framework {
-                baseName = "shared"
-            }
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach {
+        it.binaries.framework {
+            baseName = "shared"
         }
     }
+
 
     android {
         compilations.all {
@@ -45,7 +47,6 @@ kotlin {
 
                 // Coroutines
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutinesVersion}")
-                implementation("com.squareup.sqldelight:coroutines-extensions:${sqlDelightVersion}")
 
                 // DI
                 implementation("org.kodein.di:kodein-di:7.1.0")
@@ -58,6 +59,7 @@ kotlin {
         }
         val androidMain by getting{
             dependencies{
+                implementation("com.squareup.sqldelight:coroutines-extensions:${sqlDelightVersion}")
                 implementation("com.google.android.material:material:1.8.0")
                 api("io.ktor:ktor-client-okhttp:${ktorVersion}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutinesVersion}")
@@ -66,16 +68,17 @@ kotlin {
         }
         val androidUnitTest by getting
 
-        val iosMain by getting {
+        val iosMain by creating {
             dependsOn(commonMain)
             dependencies {
                 implementation("io.ktor:ktor-client-ios:${ktorVersion}")
                 implementation("com.squareup.sqldelight:native-driver:${sqlDelightVersion}")
             }
         }
-        val iosTest by getting {
+        val iosTest by creating {
             dependsOn(commonTest)
         }
+
     }
 }
 
