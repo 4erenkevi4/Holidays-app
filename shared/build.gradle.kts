@@ -6,10 +6,11 @@ plugins {
 }
 
 kotlin {
+
     android {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "11"
+                jvmTarget = "1.8"
             }
         }
     }
@@ -78,5 +79,5 @@ android {
     }
 }
 dependencies {
-    implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.core:core-ktx:1.10.1")
 }
