@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.builtins.StandardNames.FqNames.target
 
 plugins {
     kotlin("multiplatform")
@@ -44,7 +45,6 @@ kotlin {
 
                 // Coroutines
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutinesVersion}")
-                implementation("com.squareup.sqldelight:coroutines-extensions:${sqlDelightVersion}")
 
                 // DI
                 implementation("org.kodein.di:kodein-di:7.1.0")
@@ -57,6 +57,7 @@ kotlin {
         }
         val androidMain by getting{
             dependencies{
+                implementation("com.squareup.sqldelight:coroutines-extensions:${sqlDelightVersion}")
                 implementation("com.google.android.material:material:1.8.0")
                 api("io.ktor:ktor-client-okhttp:${ktorVersion}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutinesVersion}")
@@ -76,6 +77,14 @@ kotlin {
             dependsOn(commonTest)
         }
     }
+
+}
+
+tasks.register("packForXCode", Sync::class) {
+    dependsOn(tasks.getByName("linkDebugFrameworkIosArm64"))
+    val mode = kotlin.targets.getByName<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>("iosMain").binaries.findByName("debug")?.outputDirectory ?: throw GradleException("Target 'debug' not found for iOS")
+    from(mode)
+    into("src/iosMain/resources")
 }
 
 android {
@@ -86,6 +95,7 @@ android {
         targetSdk = 33
     }
 }
+
 dependencies {
     implementation("androidx.core:core-ktx:1.10.1")
 }
