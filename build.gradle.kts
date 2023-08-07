@@ -13,7 +13,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        val kotlinVersion = "1.8.0"
+        val kotlinVersion = "1.9.0"
         classpath("com.android.tools.build:gradle:4.0.2")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21")
         classpath(kotlin("serialization", version = kotlinVersion))

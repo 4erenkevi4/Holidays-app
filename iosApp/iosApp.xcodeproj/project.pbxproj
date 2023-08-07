@@ -174,7 +174,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"$SRCROOT/..\"\nexport CONFIGURATION=Debug\nexport ARCHS=arm64\nexport EXPANDED_CODE_SIGN_IDENTITY=-\nexport FRAMEWORKS_FOLDER_PATH=iosApp.app/Frameworks\nexport SDK_NAME=iphonesimulator15.0\nexport TARGET_BUILD_DIR=\"../build/ios/${CONFIGURATION}-iphonesimulator\"\n\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n\n";
+			shellScript = "
+";
 		};
 /* End PBXShellScriptBuildPhase section */
 

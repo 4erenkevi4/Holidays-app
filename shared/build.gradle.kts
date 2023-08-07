@@ -80,13 +80,6 @@ kotlin {
 
 }
 
-tasks.register("packForXCode", Sync::class) {
-    dependsOn(tasks.getByName("linkDebugFrameworkIosArm64"))
-    val mode = kotlin.targets.getByName<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>("iosMain").binaries.findByName("debug")?.outputDirectory ?: throw GradleException("Target 'debug' not found for iOS")
-    from(mode)
-    into("src/iosMain/resources")
-}
-
 android {
     namespace = "com.elinext.holidays"
     compileSdk = 33
